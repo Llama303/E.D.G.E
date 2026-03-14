@@ -44,8 +44,21 @@
 
     if (employmentStatus) {
       employmentStatus.addEventListener('change', updateEmploymentFieldsVisibility);
-      // Initialize visibility on load
       updateEmploymentFieldsVisibility();
+    }
+
+    var biometricTypeSelect = document.getElementById('biometric_type');
+    var biometricLabelText = document.getElementById('biometric_file_label_text');
+    var labelTextByType = {
+      photo: 'Upload photo',
+      fingerprint: 'Upload fingerprint image',
+      face_scan: 'Upload face scan'
+    };
+    if (biometricTypeSelect && biometricLabelText) {
+      biometricTypeSelect.addEventListener('change', function () {
+        var key = this.value;
+        biometricLabelText.textContent = labelTextByType[key] || 'Upload verification file';
+      });
     }
 
     form.addEventListener('submit', function (e) {
@@ -66,7 +79,7 @@
       var incomeSources = document.getElementById('income_sources');
       var accountPurpose = document.getElementById('account_purpose');
       var transactionNature = document.getElementById('transaction_nature');
-      var selfiePhoto = document.getElementById('selfie_photo');
+      var biometricFile = document.getElementById('biometric_file');
 
       var messages = [];
 
@@ -139,8 +152,16 @@
         messages.push('Please describe the expected nature of your transactions.');
       }
 
-      if (!selfiePhoto || !selfiePhoto.files || selfiePhoto.files.length === 0) {
-        messages.push('Please upload a selfie / face photo for verification.');
+      var biometricType = document.getElementById('biometric_type');
+      if (!biometricType || !biometricType.value) {
+        messages.push('Please select a biometric verification method.');
+      } else if (!biometricFile || !biometricFile.files || biometricFile.files.length === 0) {
+        messages.push('Please upload your biometric verification file.');
+      }
+
+      var agreeTerms = document.getElementById('agree_terms');
+      if (!agreeTerms || !agreeTerms.checked) {
+        messages.push('You must read and agree to the Terms and Conditions to continue.');
       }
 
       if (messages.length > 0) {

@@ -135,7 +135,7 @@
             placeholder="Occupation / job title"
             class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
 
-        <!-- Employer name -->
+        <!-- Employr name -->
         <input
             type="text"
             name="employer_name"
@@ -151,7 +151,7 @@
                 placeholder="Salary, business income, investments, etc."
                 rows="3"
                 required
-                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+                class="mt-1 w-full p-2 text-black rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
         </label>
 
         <!-- Account intent -->
@@ -164,7 +164,7 @@
                 placeholder="e.g. saving, investing, salary deposits, payments"
                 rows="2"
                 required
-                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
         </label>
 
         <label class="block text-sm font-medium text-gray-200">Expected nature of transactions
@@ -174,20 +174,43 @@
                 placeholder="Typical transaction size, frequency, and counterparties"
                 rows="2"
                 required
-                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+                class="mt-1 w-full p-2 text-black rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
         </label>
 
-        <!-- Biometrics & photo -->
-        <h2 class="text-lg font-semibold text-white mt-4">Biometrics & photo</h2>
+        <!-- Biometrics -->
+        <h2 class="text-lg font-semibold text-white mt-4">Biometrics</h2>
 
-        <label class="block text-sm font-medium text-gray-200">Selfie / face photo (for verification)
+        <label class="block text-sm font-medium text-gray-200">Biometric verification method
+            <select
+                name="biometric_type"
+                id="biometric_type"
+                required
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <option value="">Select method</option>
+                <option value="photo">Photo</option>
+                <option value="fingerprint">Fingerprint</option>
+                <option value="face_scan">Face scan</option>
+            </select>
+        </label>
+
+        <label id="biometric_file_label" class="block text-sm font-medium text-gray-200 mt-2"><span id="biometric_file_label_text">Upload verification file</span>
             <input
                 type="file"
-                name="selfie_photo"
-                id="selfie_photo"
+                name="biometric_file"
+                id="biometric_file"
                 accept=".jpg,.jpeg,.png"
                 required
                 class="mt-1 block w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#2fa12f] file:text-white hover:file:bg-[#3f7e42]">
+        </label>
+
+        <label class="flex items-start gap-2 text-sm text-gray-200 cursor-pointer mt-4">
+            <input
+                type="checkbox"
+                name="agree_terms"
+                id="agree_terms"
+                value="1"
+                class="mt-1 rounded focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+            <span>I have read and agree to the <a href="terms.html" target="_blank" class="text-[#2fa12f] underline hover:no-underline">Terms and Conditions</a>.</span>
         </label>
 
         <button

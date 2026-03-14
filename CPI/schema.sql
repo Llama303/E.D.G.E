@@ -20,6 +20,12 @@ CREATE TABLE IF NOT EXISTS cpi_submissions (
     income_sources TEXT NOT NULL,
     account_purpose TEXT NOT NULL,
     transaction_nature TEXT NOT NULL,
-    selfie_photo_path VARCHAR(255) NOT NULL,
+    biometric_type VARCHAR(50) NOT NULL,
+    biometric_file_path VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- If you already have cpi_submissions with selfie_photo_path, run this once to migrate:
+-- ALTER TABLE cpi_submissions ADD COLUMN biometric_type VARCHAR(50) NOT NULL DEFAULT 'photo', ADD COLUMN biometric_file_path VARCHAR(255) NOT NULL DEFAULT '';
+-- UPDATE cpi_submissions SET biometric_file_path = selfie_photo_path WHERE selfie_photo_path IS NOT NULL;
+-- ALTER TABLE cpi_submissions DROP COLUMN selfie_photo_path;

@@ -25,6 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['submit_cpi'])) {
     redirect_with_message('Invalid request.');
 }
 
+if (empty($_POST['agree_terms']) || $_POST['agree_terms'] !== '1') {
+    redirect_with_message('You must read and agree to the Terms and Conditions to continue.');
+}
+
 $full_name          = trim($_POST['full_name'] ?? '');
 $email              = trim($_POST['email'] ?? '');
 $phone              = trim($_POST['phone'] ?? '');
@@ -91,6 +95,12 @@ if (strlen($transaction_nature) < 5) {
     redirect_with_message('Please describe the expected nature of your transactions.');
 }
 
+$biometric_type = $_POST['biometric_type'] ?? '';
+$allowed_biometric = ['photo', 'fingerprint', 'face_scan'];
+if (!in_array($biometric_type, $allowed_biometric, true)) {
+    redirect_with_message('Please select a valid biometric verification method.');
+}
+
 $uploadDir = __DIR__ . '/uploads';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0775, true);
@@ -128,7 +138,7 @@ $proof_of_address_path = save_upload('proof_of_address', [
     'image/jpeg', 'image/png', 'application/pdf'
 ], $uploadDir);
 
-$selfie_photo_path = save_upload('selfie_photo', [
+$biometric_file_path = save_upload('biometric_file', [
     'image/jpeg', 'image/png'
 ], $uploadDir);
 
@@ -139,14 +149,14 @@ $stmt = $pdo->prepare("
         gov_id_file_path, proof_of_address_path,
         employment_status, occupation, employer_name,
         income_sources, account_purpose, transaction_nature,
-        selfie_photo_path
+        biometric_type, biometric_file_path
     ) VALUES (
         :full_name, :email, :phone, :dob,
         :gov_id_type, :gov_id_number,
         :gov_id_file_path, :proof_of_address_path,
         :employment_status, :occupation, :employer_name,
         :income_sources, :account_purpose, :transaction_nature,
-        :selfie_photo_path
+        :biometric_type, :biometric_file_path
     )
 ");
 
@@ -165,7 +175,8 @@ $stmt->execute([
     ':income_sources'         => $income_sources,
     ':account_purpose'        => $account_purpose,
     ':transaction_nature'     => $transaction_nature,
-    ':selfie_photo_path'      => $selfie_photo_path,
+    ':biometric_type'         => $biometric_type,
+    ':biometric_file_path'    => $biometric_file_path,
 ]);
 
 redirect_with_message('Information submitted successfully.', 'success');
