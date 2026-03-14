@@ -74,12 +74,18 @@
         messages.push('Please enter your full name.');
       }
 
-      if (!email || !email.value.includes('@')) {
-        messages.push('Please enter a valid email address.');
+      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !email.value.trim()) {
+        messages.push('Please enter your email address.');
+      } else if (!emailRegex.test(email.value.trim())) {
+        messages.push('Please enter a valid email address (e.g. name@example.com).');
       }
 
-      if (!phone || phone.value.trim().length < 7) {
-        messages.push('Please enter a valid phone number.');
+      var phoneDigits = phone ? phone.value.replace(/\D/g, '') : '';
+      if (!phone || !phone.value.trim()) {
+        messages.push('Please enter your phone number.');
+      } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+        messages.push('Please enter a valid phone number (7–15 digits).');
       }
 
       if (!dob || !dob.value) {
