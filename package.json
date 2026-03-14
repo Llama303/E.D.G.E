@@ -1,0 +1,12 @@
+{
+  "name": "E.D.G.E",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i input.css -o Styl.css",
+    "watch:css": "tailwindcss -i input.css -o Styl.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

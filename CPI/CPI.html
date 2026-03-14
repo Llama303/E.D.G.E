@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E.D.G.E</title>
+    <link rel="stylesheet" href="../Styl.css">
+    <link rel="stylesheet" href="../EDGE.css">
+    <link rel="stylesheet" href="../themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Gravitas One&family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+</head>
+<body class="themeable flex items-center justify-center min-h-screen">
+    
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme" title="Toggle theme">
+        <span class="icon-sun" aria-hidden="true">☀</span>
+        <span class="icon-moon" aria-hidden="true">🌙</span>
+    </button>
+
+    <div class="auth-card container rounded-lg p-6 flex flex-col items-center justify-center w-96 max-w-[96vw] shadow-xl border">
+        <h1 class="text-2xl font-bold cursor-default mb-3">E.D.G.E</h1>
+        <h1 class="text-2xl font-bold cursor-default mb-2">Enter Information</h1>
+
+    <div id="signup-error" class="auth-error text-sm text-center min-h-[1.25rem] mb-2" aria-live="polite" role="alert"></div>
+    <div id="signup-success" class="text-[#2fa12f] text-sm text-center min-h-[1.25rem] mb-2" aria-live="polite"></div>
+
+    <form action="verify_identity.php" method="post" enctype="multipart/form-data" class="text-[#000000] space-y-3 w-full">
+        <!-- Full name -->
+        <input
+            type="text"
+            name="full_name"
+            id="full_name"
+            placeholder="Full name"
+            required
+            class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+
+        <!-- Date of birth -->
+        <label class="block text-sm font-medium text-gray-200">Date of birth
+            <input
+                type="date"
+                name="dob"
+                id="dob"
+                required
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+        </label>
+
+        <!-- Government ID type + number -->
+        <div class="flex gap-2">
+            <select
+                name="gov_id_type"
+                id="gov_id_type"
+                required
+                class="w-1/2 p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <option value="">Select ID type</option>
+                <option value="passport">Passport</option>
+                <option value="drivers_license">Driver's licence</option>
+                <option value="national_id">National ID</option>
+            </select>
+            <input
+                type="text"
+                name="gov_id_number"
+                id="gov_id_number"
+                placeholder="ID number"
+                required
+                class="w-1/2 p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+        </div>
+
+        <!-- Government ID upload -->
+        <label class="block text-sm font-medium text-gray-200">Upload government ID (image or PDF)
+            <input
+                type="file"
+                name="gov_id_file"
+                id="gov_id_file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                required
+                class="mt-1 block w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#2fa12f] file:text-white hover:file:bg-[#3f7e42]">
+        </label>
+
+        <!-- Proof of address upload -->
+        <label class="block text-sm font-medium text-gray-200">Proof of address (utility bill, bank statement, etc.)
+            <input
+                type="file"
+                name="proof_of_address"
+                id="proof_of_address"
+                accept=".jpg,.jpeg,.png,.pdf"
+                required
+                class="mt-1 block w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#2fa12f] file:text-white hover:file:bg-[#3f7e42]">
+        </label>
+
+        <!-- Financial profile -->
+        <h2 class="text-lg font-semibold text-white mt-4">Financial profile</h2>
+
+        <!-- Employment status -->
+        <label class="block text-sm font-medium text-gray-200">Employment status
+            <select
+                name="employment_status"
+                id="employment_status"
+                required
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <option value="">Select status</option>
+                <option value="employed">Employed</option>
+                <option value="self_employed">Self-employed</option>
+                <option value="student">Student</option>
+                <option value="retired">Retired</option>
+                <option value="unemployed">Unemployed</option>
+                <option value="other">Other</option>
+            </select>
+        </label>
+
+        <!-- Occupation -->
+        <input
+            type="text"
+            name="occupation"
+            id="occupation"
+            placeholder="Occupation / job title"
+            class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+
+        <!-- Employer name -->
+        <input
+            type="text"
+            name="employer_name"
+            id="employer_name"
+            placeholder="Name of employer (or 'Self-employed')"
+            class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+
+        <!-- Income sources -->
+        <label class="block text-sm font-medium text-gray-200">Income sources
+            <textarea
+                name="income_sources"
+                id="income_sources"
+                placeholder="Salary, business income, investments, etc."
+                rows="3"
+                required
+                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+        </label>
+
+        <!-- Account intent -->
+        <h2 class="text-lg font-semibold text-white mt-4">Account intent</h2>
+
+        <label class="block text-sm font-medium text-gray-200">Purpose of opening this account
+            <textarea
+                name="account_purpose"
+                id="account_purpose"
+                placeholder="e.g. saving, investing, salary deposits, payments"
+                rows="2"
+                required
+                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+        </label>
+
+        <label class="block text-sm font-medium text-gray-200">Expected nature of transactions
+            <textarea
+                name="transaction_nature"
+                id="transaction_nature"
+                placeholder="Typical transaction size, frequency, and counterparties"
+                rows="2"
+                required
+                class="mt-1 w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none"></textarea>
+        </label>
+
+        <!-- Biometrics & photo -->
+        <h2 class="text-lg font-semibold text-white mt-4">Biometrics & photo</h2>
+
+        <label class="block text-sm font-medium text-gray-200">Selfie / face photo (for verification)
+            <input
+                type="file"
+                name="selfie_photo"
+                id="selfie_photo"
+                accept=".jpg,.jpeg,.png"
+                required
+                class="mt-1 block w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#2fa12f] file:text-white hover:file:bg-[#3f7e42]">
+        </label>
+
+        <button
+            type="submit"
+            name="submit_cpi"
+            value="1"
+            class="w-full text-white bg-[#2fa12f] hover:bg-[#3f7e42] rounded-lg p-2.5 font-medium focus:ring-2 focus:ring-[#2fa12f] focus:outline-none transition-colors">
+            Continue
+        </button>
+    </form>
+    <script src="../themes.js"></script>
+    <script src="Cpi.js"></script>
+</body>
+</html>

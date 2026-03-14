@@ -1,0 +1,18 @@
+body{
+    font-family: arial, sans-serif;
+}
+h1{
+    font-family:Oswald;
+}
+.controls{
+    font-family:Oswald ;
+}
+label{
+    font-family:Platypi;
+}
+
+.Container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
