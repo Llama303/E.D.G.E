@@ -53,6 +53,8 @@
       errorEl.textContent = '';
 
       var fullName = document.getElementById('full_name');
+      var email = document.getElementById('email');
+      var phone = document.getElementById('phone');
       var dob = document.getElementById('dob');
       var govIdType = document.getElementById('gov_id_type');
       var govIdNumber = document.getElementById('gov_id_number');
@@ -70,6 +72,14 @@
 
       if (!fullName || fullName.value.trim().length < 2) {
         messages.push('Please enter your full name.');
+      }
+
+      if (!email || !email.value.includes('@')) {
+        messages.push('Please enter a valid email address.');
+      }
+
+      if (!phone || phone.value.trim().length < 7) {
+        messages.push('Please enter a valid phone number.');
       }
 
       if (!dob || !dob.value) {
