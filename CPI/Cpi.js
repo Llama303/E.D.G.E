@@ -1,4 +1,5 @@
 (function () {
+  // --- 1. URL PARAMS & UTILS ---
   var params = new URLSearchParams(window.location.search);
   var errorEl = document.getElementById('signup-error');
   var successEl = document.getElementById('signup-success');
@@ -8,172 +9,155 @@
   if (success && successEl) successEl.textContent = decodeURIComponent(success);
 
   function yearsBetween(dateString) {
-    var dob = new Date(dateString);
-    if (isNaN(dob.getTime())) return 0;
-    var diff = Date.now() - dob.getTime();
-    var ageDate = new Date(diff);
-    return Math.abs(ageDate.getUTCFullYear() - 1970);
+      var dob = new Date(dateString);
+      if (isNaN(dob.getTime())) return 0;
+      var diff = Date.now() - dob.getTime();
+      var ageDate = new Date(diff);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
   }
 
-  function initFormValidation() {
-    var form = document.querySelector('form[action="verify_identity.php"]');
-    if (!form) return;
+  // --- 2. FACE SCAN GLOBALS ---
+  const video = document.getElementById('video');
+  const scanBtn = document.getElementById('scan-btn');
+  const descriptorInput = document.getElementById('face_descriptor_input');
+  const statusText = document.getElementById('scan-status');
 
-    var employmentStatus = document.getElementById('employment_status');
-    var occupation = document.getElementById('occupation');
-    var employerName = document.getElementById('employer_name');
-
-    function updateEmploymentFieldsVisibility() {
-      if (!employmentStatus || !occupation || !employerName) return;
-
-      var status = employmentStatus.value;
-      var hideFields = status === 'retired' || status === 'unemployed';
-
-      if (hideFields) {
-        occupation.style.display = 'none';
-        employerName.style.display = 'none';
-        occupation.required = false;
-        employerName.required = false;
-      } else {
-        occupation.style.display = '';
-        employerName.style.display = '';
-        occupation.required = true;
-        employerName.required = true;
+  async function initAI() {
+      try {
+          if (!statusText) return;
+          statusText.textContent = "Loading security models...";
+          const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+          
+          await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+          await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+          await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+          
+          startVideo();
+      } catch (err) {
+          if (statusText) statusText.textContent = "AI Initialization failed.";
+          console.error(err);
       }
-    }
+  }
 
-    if (employmentStatus) {
-      employmentStatus.addEventListener('change', updateEmploymentFieldsVisibility);
-      updateEmploymentFieldsVisibility();
-    }
+  function startVideo() {
+      navigator.mediaDevices.getUserMedia({ video: {} })
+          .then(stream => {
+              if (video) video.srcObject = stream;
+              if (statusText) statusText.textContent = "Camera active. Center your face.";
+          })
+          .catch(err => {
+              if (statusText) statusText.textContent = "Camera Error: Check permissions.";
+          });
+  }
 
-    var biometricTypeSelect = document.getElementById('biometric_type');
-    var biometricLabelText = document.getElementById('biometric_file_label_text');
-    var labelTextByType = {
-      photo: 'Upload photo',
-      fingerprint: 'Upload fingerprint image',
-      face_scan: 'Upload face scan'
-    };
-    if (biometricTypeSelect && biometricLabelText) {
-      biometricTypeSelect.addEventListener('change', function () {
-        var key = this.value;
-        biometricLabelText.textContent = labelTextByType[key] || 'Upload verification file';
-      });
-    }
+  // --- 3. FORM VALIDATION & LOGIC ---
+  function initFormValidation() {
+      var form = document.querySelector('form[action="verify_identity.php"]');
+      if (!form) return;
 
-    form.addEventListener('submit', function (e) {
-      if (!errorEl) return;
-      errorEl.textContent = '';
-
-      var fullName = document.getElementById('full_name');
-      var email = document.getElementById('email');
-      var phone = document.getElementById('phone');
-      var dob = document.getElementById('dob');
-      var govIdType = document.getElementById('gov_id_type');
-      var govIdNumber = document.getElementById('gov_id_number');
-      var govIdFile = document.getElementById('gov_id_file');
-      var proofOfAddress = document.getElementById('proof_of_address');
       var employmentStatus = document.getElementById('employment_status');
       var occupation = document.getElementById('occupation');
       var employerName = document.getElementById('employer_name');
-      var incomeSources = document.getElementById('income_sources');
-      var accountPurpose = document.getElementById('account_purpose');
-      var transactionNature = document.getElementById('transaction_nature');
+      var biometricType = document.getElementById('biometric_type');
+      var faceScannerSection = document.getElementById('face-scanner-section');
+      var uploadSection = document.getElementById('biometric-upload-section');
       var biometricFile = document.getElementById('biometric_file');
 
-      var messages = [];
-
-      if (!fullName || fullName.value.trim().length < 2) {
-        messages.push('Please enter your full name.');
+      // Employment Visibility Logic
+      if (employmentStatus) {
+          employmentStatus.addEventListener('change', function() {
+              var status = this.value;
+              var hideFields = status === 'retired' || status === 'unemployed';
+              occupation.style.display = hideFields ? 'none' : 'block';
+              employerName.style.display = hideFields ? 'none' : 'block';
+          });
       }
 
-      var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !email.value.trim()) {
-        messages.push('Please enter your email address.');
-      } else if (!emailRegex.test(email.value.trim())) {
-        messages.push('Please enter a valid email address (e.g. name@example.com).');
+      // Biometric Toggle Logic
+      if (biometricType) {
+          biometricType.addEventListener('change', function() {
+              if (this.value === 'face') {
+                  if (faceScannerSection) faceScannerSection.style.display = 'block';
+                  if (uploadSection) uploadSection.style.display = 'none';
+                  initAI(); 
+              } else {
+                  if (faceScannerSection) faceScannerSection.style.display = 'none';
+                  if (uploadSection) uploadSection.style.display = 'block';
+                  if (video && video.srcObject) {
+                      video.srcObject.getTracks().forEach(track => track.stop());
+                      video.srcObject = null;
+                  }
+              }
+          });
       }
 
-      var phoneDigits = phone ? phone.value.replace(/\D/g, '') : '';
-      if (!phone || !phone.value.trim()) {
-        messages.push('Please enter your phone number.');
-      } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
-        messages.push('Please enter a valid phone number (7–15 digits).');
-      }
+      // ONE SINGLE SUBMIT LISTENER
+      form.addEventListener('submit', function (e) {
+          var messages = [];
+          var selectedMethod = biometricType ? biometricType.value : '';
 
-      if (!dob || !dob.value) {
-        messages.push('Please provide your date of birth.');
-      } else if (yearsBetween(dob.value) < 18) {
-        messages.push('You must be at least 18 years old.');
-      }
+          // 1. Biometric Check
+          if (selectedMethod === 'face') {
+              if (!descriptorInput || !descriptorInput.value) {
+                  messages.push("Please 'Capture Face Map' to verify your identity.");
+              }
+          } else if (selectedMethod === 'fingerprint' || selectedMethod === 'manual') {
+              if (!biometricFile || biometricFile.files.length === 0) {
+                  messages.push("Please upload your biometric verification file.");
+              }
+          } else {
+              messages.push("Please select a biometric verification method.");
+          }
 
-      if (!govIdType || !govIdType.value) {
-        messages.push('Please select a government ID type.');
-      }
+          // 2. Age Check
+          var dob = document.getElementById('dob');
+          if (!dob || yearsBetween(dob.value) < 18) {
+              messages.push('You must be at least 18 years old.');
+          }
 
-      if (!govIdNumber || govIdNumber.value.trim().length < 3) {
-        messages.push('Please enter a valid government ID number.');
-      }
+          // 3. Gov ID Check
+          var govIdFile = document.getElementById('gov_id_file');
+          if (!govIdFile || govIdFile.files.length === 0) {
+              messages.push("Please upload your Gov ID.");
+          }
 
-      if (!govIdFile || !govIdFile.files || govIdFile.files.length === 0) {
-        messages.push('Please upload your government ID.');
-      }
+          // 4. Terms Check
+          var agreeTerms = document.getElementById('agree_terms');
+          if (!agreeTerms || !agreeTerms.checked) {
+              messages.push('You must agree to the Terms and Conditions.');
+          }
 
-      if (!proofOfAddress || !proofOfAddress.files || proofOfAddress.files.length === 0) {
-        messages.push('Please upload proof of address.');
-      }
-
-      if (!employmentStatus || !employmentStatus.value) {
-        messages.push('Please select your employment status.');
-      }
-
-      var status = employmentStatus ? employmentStatus.value : '';
-      var requireEmploymentDetails = status && status !== 'retired' && status !== 'unemployed';
-
-      if (requireEmploymentDetails) {
-        if (!occupation || occupation.value.trim().length < 2) {
-          messages.push('Please enter your occupation.');
-        }
-
-        if (!employerName || employerName.value.trim().length < 2) {
-          messages.push('Please enter your employer name (or "Self-employed").');
-        }
-      }
-
-      if (!incomeSources || incomeSources.value.trim().length < 5) {
-        messages.push('Please describe your income sources.');
-      }
-
-      if (!accountPurpose || accountPurpose.value.trim().length < 5) {
-        messages.push('Please describe the purpose of opening this account.');
-      }
-
-      if (!transactionNature || transactionNature.value.trim().length < 5) {
-        messages.push('Please describe the expected nature of your transactions.');
-      }
-
-      var biometricType = document.getElementById('biometric_type');
-      if (!biometricType || !biometricType.value) {
-        messages.push('Please select a biometric verification method.');
-      } else if (!biometricFile || !biometricFile.files || biometricFile.files.length === 0) {
-        messages.push('Please upload your biometric verification file.');
-      }
-
-      var agreeTerms = document.getElementById('agree_terms');
-      if (!agreeTerms || !agreeTerms.checked) {
-        messages.push('You must read and agree to the Terms and Conditions to continue.');
-      }
-
-      if (messages.length > 0) {
-        e.preventDefault();
-        errorEl.textContent = messages[0];
-      }
-    });
+          // Error Reporting
+          if (messages.length > 0) {
+              e.preventDefault();
+              if (errorEl) {
+                  errorEl.textContent = messages[0];
+                  window.scrollTo(0, 0); 
+              } else {
+                  alert(messages[0]);
+              }
+          }
+      });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFormValidation);
-  } else {
-    initFormValidation();
+  // AI Capture Button Logic
+  if (scanBtn) {
+      scanBtn.addEventListener('click', async () => {
+          if (!statusText) return;
+          statusText.textContent = "Analyzing face... Stay still.";
+          const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+
+          if (detection) {
+              descriptorInput.value = JSON.stringify(Array.from(detection.descriptor));
+              statusText.textContent = "✅ Face Map Captured!";
+              scanBtn.textContent = "Rescan Face";
+              scanBtn.style.backgroundColor = "#2563eb"; // Change color to blue on success
+          } else {
+              statusText.textContent = "❌ Face not detected. Try again.";
+          }
+      });
   }
+
+  // --- 4. BOOTSTRAP ---
+  document.addEventListener('DOMContentLoaded', initFormValidation);
 })();

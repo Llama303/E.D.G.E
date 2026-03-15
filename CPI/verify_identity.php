@@ -1,8 +1,7 @@
 <?php
 /**
- * E.D.G.E – CPI form handler: validate, store uploads, insert into database.
- * Requires: PHP with PDO MySQL; database and table created (see schema.sql).
- * Database settings: edit CPI/config.php for local vs cloud.
+ * E.D.G.E – CPI form handler
+ * Optimized to handle both Manual Biometric Uploads and AI Face Map Capture.
  */
 
 require_once __DIR__ . '/config.php';
@@ -29,6 +28,7 @@ if (empty($_POST['agree_terms']) || $_POST['agree_terms'] !== '1') {
     redirect_with_message('You must read and agree to the Terms and Conditions to continue.');
 }
 
+// --- 1. CAPTURE FORM DATA ---
 $full_name          = trim($_POST['full_name'] ?? '');
 $email              = trim($_POST['email'] ?? '');
 $phone              = trim($_POST['phone'] ?? '');
@@ -41,66 +41,17 @@ $employer_name      = trim($_POST['employer_name'] ?? '');
 $income_sources     = trim($_POST['income_sources'] ?? '');
 $account_purpose    = trim($_POST['account_purpose'] ?? '');
 $transaction_nature = trim($_POST['transaction_nature'] ?? '');
+$biometric_type     = $_POST['biometric_type'] ?? '';
+$face_descriptor    = $_POST['face_descriptor'] ?? null; // The AI captured data
 
-if ($full_name === '' || strlen($full_name) < 2) {
-    redirect_with_message('Please enter your full name.');
-}
+// --- 2. VALIDATION ---
+if ($full_name === '' || strlen($full_name) < 2) redirect_with_message('Please enter your full name.');
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) redirect_with_message('Please enter a valid email address.');
+if ($dob === '') redirect_with_message('Please provide your date of birth.');
+if ($gov_id_type === '') redirect_with_message('Please select a government ID type.');
+if ($employment_status === '') redirect_with_message('Please select your employment status.');
 
-if ($email === '') {
-    redirect_with_message('Please enter your email address.');
-}
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    redirect_with_message('Please enter a valid email address.');
-}
-
-$phoneDigits = preg_replace('/\D/', '', $phone);
-if (strlen($phoneDigits) < 7 || strlen($phoneDigits) > 15) {
-    redirect_with_message('Please enter a valid phone number (7–15 digits).');
-}
-
-if ($dob === '') {
-    redirect_with_message('Please provide your date of birth.');
-}
-
-if ($gov_id_type === '') {
-    redirect_with_message('Please select a government ID type.');
-}
-
-if (strlen($gov_id_number) < 3) {
-    redirect_with_message('Please enter a valid government ID number.');
-}
-
-if ($employment_status === '') {
-    redirect_with_message('Please select your employment status.');
-}
-
-if (!in_array($employment_status, ['retired', 'unemployed'], true)) {
-    if (strlen($occupation) < 2) {
-        redirect_with_message('Please enter your occupation.');
-    }
-    if (strlen($employer_name) < 2) {
-        redirect_with_message('Please enter your employer name (or "Self-employed").');
-    }
-}
-
-if (strlen($income_sources) < 5) {
-    redirect_with_message('Please describe your income sources.');
-}
-
-if (strlen($account_purpose) < 5) {
-    redirect_with_message('Please describe the purpose of opening this account.');
-}
-
-if (strlen($transaction_nature) < 5) {
-    redirect_with_message('Please describe the expected nature of your transactions.');
-}
-
-$biometric_type = $_POST['biometric_type'] ?? '';
-$allowed_biometric = ['photo', 'fingerprint', 'face_scan'];
-if (!in_array($biometric_type, $allowed_biometric, true)) {
-    redirect_with_message('Please select a valid biometric verification method.');
-}
-
+// --- 3. FILE UPLOAD UTILITY ---
 $uploadDir = __DIR__ . '/uploads';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0775, true);
@@ -108,7 +59,7 @@ if (!is_dir($uploadDir)) {
 
 function save_upload($key, $allowedTypes, $uploadDir) {
     if (!isset($_FILES[$key]) || $_FILES[$key]['error'] !== UPLOAD_ERR_OK) {
-        redirect_with_message('Error uploading file: ' . $key);
+        return null; // Return null if file is optional or missing
     }
 
     $tmpName = $_FILES[$key]['tmp_name'];
@@ -130,18 +81,32 @@ function save_upload($key, $allowedTypes, $uploadDir) {
     return 'uploads/' . $newName;
 }
 
-$gov_id_file_path = save_upload('gov_id_file', [
-    'image/jpeg', 'image/png', 'application/pdf'
-], $uploadDir);
+// --- 4. PROCESS UPLOADS ---
 
-$proof_of_address_path = save_upload('proof_of_address', [
-    'image/jpeg', 'image/png', 'application/pdf'
-], $uploadDir);
+// Mandatory IDs
+$gov_id_file_path = save_upload('gov_id_file', ['image/jpeg', 'image/png', 'application/pdf'], $uploadDir);
+if (!$gov_id_file_path) redirect_with_message('Please upload your government ID.');
 
-$biometric_file_path = save_upload('biometric_file', [
-    'image/jpeg', 'image/png'
-], $uploadDir);
+$proof_of_address_path = save_upload('proof_of_address', ['image/jpeg', 'image/png', 'application/pdf'], $uploadDir);
+if (!$proof_of_address_path) redirect_with_message('Please upload proof of address.');
 
+// Conditional Biometrics
+$biometric_file_path = null;
+
+if ($biometric_type === 'face') {
+    // If using AI, we MUST have the face_descriptor string
+    if (empty($face_descriptor)) {
+        redirect_with_message('Face scan data missing. Please capture your face map.');
+    }
+} else {
+    // If using Fingerprint/Manual, we MUST have a file upload
+    $biometric_file_path = save_upload('biometric_file', ['image/jpeg', 'image/png'], $uploadDir);
+    if (!$biometric_file_path) {
+        redirect_with_message('Please upload your biometric verification file.');
+    }
+}
+
+// --- 5. DATABASE INSERT ---
 $stmt = $pdo->prepare("
     INSERT INTO cpi_submissions (
         full_name, email, phone, dob,
@@ -149,14 +114,14 @@ $stmt = $pdo->prepare("
         gov_id_file_path, proof_of_address_path,
         employment_status, occupation, employer_name,
         income_sources, account_purpose, transaction_nature,
-        biometric_type, biometric_file_path
+        biometric_type, biometric_file_path, face_descriptor
     ) VALUES (
         :full_name, :email, :phone, :dob,
         :gov_id_type, :gov_id_number,
         :gov_id_file_path, :proof_of_address_path,
         :employment_status, :occupation, :employer_name,
         :income_sources, :account_purpose, :transaction_nature,
-        :biometric_type, :biometric_file_path
+        :biometric_type, :biometric_file_path, :face_descriptor
     )
 ");
 
@@ -170,13 +135,14 @@ $stmt->execute([
     ':gov_id_file_path'       => $gov_id_file_path,
     ':proof_of_address_path'  => $proof_of_address_path,
     ':employment_status'      => $employment_status,
-    ':occupation'             => $occupation !== '' ? $occupation : null,
-    ':employer_name'          => $employer_name !== '' ? $employer_name : null,
+    ':occupation'             => $occupation ?: null,
+    ':employer_name'          => $employer_name ?: null,
     ':income_sources'         => $income_sources,
     ':account_purpose'        => $account_purpose,
     ':transaction_nature'     => $transaction_nature,
     ':biometric_type'         => $biometric_type,
     ':biometric_file_path'    => $biometric_file_path,
+    ':face_descriptor'        => $face_descriptor 
 ]);
 
 redirect_with_message('Information submitted successfully.', 'success');
