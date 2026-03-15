@@ -169,34 +169,96 @@
       }
 
       var biometricType = document.getElementById('biometric_type');
-      if (!biometricType || !biometricType.value) {
-        messages.push('Please select a biometric verification method.');
-      } else if (!biometricFile || !biometricFile.files || biometricFile.files.length === 0) {
-        messages.push('Please upload your biometric verification file.');
-      }
-
-      if (biometricFile.files[0]) {
-        const bioName = biometricFile.files[0].name.toLowerCase();
-        if (!bioName.match(/\.(jpg|jpeg|png)$/)) {
-          messages.push('Biometric file must be JPG, PNG only.');
-        }
-      }
-      
-      var agreeTerms = document.getElementById('agree_terms');
-      if (!agreeTerms || !agreeTerms.checked) {
-        messages.push('You must read and agree to the Terms and Conditions to continue.');
-      }
-
-      if (messages.length > 0) {
-        e.preventDefault();
-        errorEl.textContent = messages[0];
-      }
-    });
+  if (!biometricType || !biometricType.value) {
+    messages.push('Please select a biometric verification method.');
+  } else if (!biometricFile || !biometricFile.files || biometricFile.files.length === 0) {
+    messages.push('Please upload your biometric verification file.');
   }
 
+  if (biometricFile.files[0]) {
+    const bioName = biometricFile.files[0].name.toLowerCase();
+    if (!bioName.match(/\.(jpg|jpeg|png)$/)) {
+      messages.push('Biometric file must be JPG, PNG only.');
+    }
+  }
+  
+  var agreeTerms = document.getElementById('agree_terms');
+  if (!agreeTerms || !agreeTerms.checked) {
+    messages.push('You must read and agree to the Terms and Conditions to continue.');
+  }
+
+  if (messages.length > 0) {
+    e.preventDefault();
+    errorEl.textContent = messages[0];
+    return; // Stop here if validation fails
+  }
+
+  // ✅ SUCCESS: Check biometric type for redirect
+  if (biometricType.value === 'face_scan') {
+    e.preventDefault(); // Prevent PHP submission
+    
+    // Save ALL form data to localStorage
+    var formData = {
+      full_name: fullName.value,
+      email: email.value,
+      phone: phone.value,
+      dob: dob.value,
+      gov_id_type: gov_idType.value,
+      gov_id_number: govIdNumber.value,
+      employment_status: employmentStatus.value,
+      occupation: occupation.value,
+      employer_name: employerName.value,
+      income_sources: incomeSources.value,
+      account_purpose: accountPurpose.value,
+      transaction_nature: transactionNature.value,
+      biometric_type: 'face_scan',
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('cpi_data', JSON.stringify(formData));
+    window.location.href = 'facescan.html';
+    if (messages.length > 0) {
+      e.preventDefault();
+      errorEl.textContent = messages[0];
+      return;
+    }
+  
+    // ✅ SUCCESS: Check biometric type for redirect
+    if (biometricType.value === 'face_scan') {
+      e.preventDefault();
+      
+      var formData = {
+        full_name: fullName.value,
+        email: email.value,
+        phone: phone.value,
+        dob: dob.value,
+        gov_id_type: govIdType.value,
+        gov_id_number: govIdNumber.value,
+        employment_status: employmentStatus.value,
+        occupation: occupation.value,
+        employer_name: employerName.value,
+        income_sources: incomeSources.value,
+        account_purpose: accountPurpose.value,
+        transaction_nature: transactionNature.value,
+        biometric_type: 'face_scan',
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('cpi_data', JSON.stringify(formData));
+      window.location.href = 'facescan.html';
+      return;  // ← EXIT DONT MOVE IT
+    }
+  
+    // For other biometrics (photo/fingerprint), submit normally to PHP
+    successEl.textContent = 'Submitting...';
+  }); // ← Closes form.addEventListener
+  
+  } // ← Closes initFormValidation
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initFormValidation);
   } else {
     initFormValidation();
   }
-})();
+  })(); // ← Closes IIFE
+  

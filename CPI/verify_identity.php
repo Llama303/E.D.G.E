@@ -101,6 +101,11 @@ if (!in_array($biometric_type, $allowed_biometric, true)) {
     redirect_with_message('Please select a valid biometric verification method.');
 }
 
+if (isset($_POST['biometric_type']) && $_POST['biometric_type'] === 'face_scan') {
+    // Handle face scan file + CPI data from localStorage
+    // Save both to databases using the migrated biometric schema or whater
+}
+
 $uploadDir = __DIR__ . '/uploads';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0775, true);
