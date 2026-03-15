@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E.D.G.E. — Enter Information</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="Styl.css"/>     <!-- keep your tailwind base if needed -->
+  <link rel="stylesheet" href="EDGE.css"/>     <!-- your custom overrides -->
+  <link rel="stylesheet" href="themes.css"/>   <!-- theme variables -->
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --text: #f0f0f0;
+      --text-light: #a0a0a0;
+      --green: #22c55e;
+      --green-dark: #16a34a;
+      --accent: #22c55e;
+      --border: #333;
+      --shadow: rgba(0,0,0,0.6);
+      --red: #ef4444;
+      --input-bg: #222;
+      --success: #22c55e;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .header .subtitle {
+      color: var(--text-light);
+      font-size: 1.05rem;
+      margin-top: 0.25rem;
+    }
+
+    .form-card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 2rem 4rem 2rem 1.8rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px var(--shadow);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 1.8rem 0 1.2rem;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+    }
+
+    .required::after {
+      content: "*";
+      color: var(--red);
+      margin-left: 0.3rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.95rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.18);
+    }
+
+    input[type="file"] {
+      padding: 0.6rem 1rem;
+    }
+
+    .file-label {
+      color: var(--green);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+      display: block;
+    }
+
+    .btn-continue {
+      width: 100%;
+      background: var(--green);
+      color: white;
+      border: none;
+      padding: 1.1rem;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 1.5rem;
+    }
+
+    .btn-continue:hover {
+      background: var(--green-dark);
+    }
+
+    .error {
+      color: var(--red);
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+      min-height: 1.2rem;
+    }
+
+    .flex-split {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .flex-split > * {
+      flex: 1;
+    }
+
+    @media (max-width: 480px) {
+      .form-card { padding: 1.6rem 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>E.D.G.E</h1>
+    <div class="subtitle">Enter Information</div>
+  </div>
+
+  <div class="form-card">
+
+    <div id="signup-error" class="error" role="alert"></div>
+    <div id="signup-success" style="color:var(--green); font-size:0.95rem; text-align:center; margin-bottom:1.5rem;"></div>
+
+    <form action="verify_identity.php" method="post" enctype="multipart/form-data">
+
+      <!-- Personal Information -->
+      <div class="form-group">
+        <label class="label required" for="full_name">Full name</label>
+        <input type="text" name="full_name" id="full_name" required placeholder="Jay Wright">
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="email">Email address</label>
+        <input type="email" name="email" id="email" required placeholder="jaywright@example.com">
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="phone">Phone number</label>
+        <input type="tel" name="phone" id="phone" required placeholder="+1 (876) 123-4567">
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="dob">Date of birth</label>
+        <input type="date" name="dob" id="dob" required>
+      </div>
+
+      <!-- Government ID -->
+      <div class="form-group flex-split">
+        <div>
+          <label class="label required" for="gov_id_type">ID type</label>
+          <select name="gov_id_type" id="gov_id_type" required>
+            <option value="">Select ID type</option>
+            <option value="passport">Passport</option>
+            <option value="drivers_license">Driver's licence</option>
+            <option value="national_id">National ID</option>
+          </select>
+        </div>
+        <div>
+          <label class="label required" for="gov_id_number">ID number</label>
+          <input type="text" name="gov_id_number" id="gov_id_number" required placeholder="1561156165">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="gov_id_file">Upload government ID (image or PDF)</label>
+        <input type="file" name="gov_id_file" id="gov_id_file" accept="image/*,.pdf" required>
+        <span class="file-label">Choose File — No file chosen</span>
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="proof_of_address">Proof of address (utility bill, bank statement, etc.)</label>
+        <input type="file" name="proof_of_address" id="proof_of_address" accept="image/*,.pdf" required>
+        <span class="file-label">Choose File — No file chosen</span>
+      </div>
+
+      <!-- Financial Profile -->
+      <h2 class="section-title">Financial profile</h2>
+
+      <div class="form-group">
+        <label class="label required" for="employment_status">Employment status</label>
+        <select name="employment_status" id="employment_status" required>
+          <option value="">Select status</option>
+          <option value="employed">Employed</option>
+          <option value="self_employed">Self-employed</option>
+          <option value="student">Student</option>
+          <option value="retired">Retired</option>
+          <option value="unemployed">Unemployed</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="occupation">Occupation / job title</label>
+        <input type="text" name="occupation" id="occupation" placeholder="Student / Software Developer">
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="employer_name">Name of employer (or 'Self-employed')</label>
+        <input type="text" name="employer_name" id="employer_name" placeholder="Utech / Self-employed">
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="income_sources">Income sources</label>
+        <textarea name="income_sources" id="income_sources" rows="3" required placeholder="Salary, business income, investments, etc."></textarea>
+      </div>
+
+      <!-- Account Intent -->
+      <h2 class="section-title">Account intent</h2>
+
+      <div class="form-group">
+        <label class="label required" for="account_purpose">Purpose of opening this account</label>
+        <textarea name="account_purpose" id="account_purpose" rows="2" required placeholder="e.g. saving, investing, salary deposits, payments"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="label required" for="transaction_nature">Expected nature of transactions</label>
+        <textarea name="transaction_nature" id="transaction_nature" rows="2" required placeholder="Typical transaction size, frequency, and counterparties"></textarea>
+      </div>
+
+      <!-- Biometrics -->
+      <h2 class="section-title">Biometrics & photo</h2>
+
+      <div class="form-group">
+        <label class="label required" for="selfie_photo">Selfie / face photo (for verification)</label>
+        <input type="file" name="selfie_photo" id="selfie_photo" accept="image/*" required>
+        <span class="file-label">Choose File — No file chosen</span>
+      </div>
+
+      <button type="submit" name="submit_cpi" value="1" class="btn-continue">
+        Continue
+      </button>
+
+    </form>
+  </div>
+
+  <script src="Cpi.js"></script>
+</body>
+</html>
