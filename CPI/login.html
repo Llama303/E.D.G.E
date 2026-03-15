@@ -6,7 +6,7 @@
     <title>E.D.G.E - Log in</title>
     
     <link rel="stylesheet" href="../Styl.css">
-    <link rel="stylesheet" href="../EDGE.css">
+    <link rel="stylesheet" href="../edge.css">
     <link rel="stylesheet" href="../themes.css">
     <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Platypi:wght@300..800&display=swap" rel="stylesheet">
 
@@ -48,7 +48,7 @@
         </div>
 
         <p class="auth-muted text-sm mt-4 text-center">
-            Don't have an account? <a href="CPI.html" class="text-[#2fa12f] underline hover:no-underline">Sign up</a>.
+            Don't have an account? <a href="cpi.html" class="text-[#2fa12f] underline hover:no-underline">Sign up</a>.
         </p>
     </div>
 
@@ -100,7 +100,7 @@
                 startFaceScan(JSON.parse(profile.face_descriptor));
             } else {
                 // No face scan saved? Proceed to dashboard
-                window.location.href = 'DESKTOP/DASHBOARD.html';
+                window.location.href = 'desktop/dashboard.html';
             }
         });
 
@@ -144,7 +144,7 @@
                                 const dist = faceapi.euclideanDistance(detection.descriptor, new Float32Array(savedDescriptor));
                                 if (dist < 0.5) {
                                     scanStatus.textContent = "Identity Confirmed. Unlocking...";
-                                    setTimeout(() => { window.location.href = 'DESKTOP/DASHBOARD.html'; }, 1000);
+                                    setTimeout(() => { window.location.href = 'desktop/dashboard.html'; }, 1000);
                                     return; // Success!
                                 }
                             }
