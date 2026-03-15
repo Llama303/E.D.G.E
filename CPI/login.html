@@ -10,12 +10,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-</head>
+</head>s
 <body class="themeable flex items-center justify-center min-h-screen">
     <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme" title="Toggle theme">
         <span class="icon-sun" aria-hidden="true">☀</span>
         <span class="icon-moon" aria-hidden="true">🌙</span>
-    </button>
+    </button>s
 
     <div class="auth-card container rounded-lg p-6 flex flex-col items-center justify-center w-96 max-w-[96vw] shadow-xl border">
         <h1 class="text-2xl font-bold cursor-default mb-3">E.D.G.E</h1>
@@ -27,7 +27,7 @@
         <form id="login-form" class="text-[#000000] space-y-3 w-full">
             <input
                 type="email"
-                name="email"
+                name="email"k
                 id="email"
                 placeholder="Email address"
                 required
@@ -46,6 +46,12 @@
                 id="submit-btn"
                 class="w-full text-white bg-[#2fa12f] hover:bg-[#3f7e42] rounded-lg p-2.5 font-medium focus:ring-2 focus:ring-[#2fa12f] focus:outline-none transition-colors">
                 Log in
+            </button>
+            <button
+                type="button"
+                id="forgot-btn"
+                class="w-full text-[#2fa12f] bg-transparent hover:underline rounded-lg p-2 font-medium focus:outline-none transition-colors">
+                Forgot password?
             </button>
         </form>
 
@@ -89,7 +95,28 @@
                     return;
                 }
                 successEl.textContent = 'Success. Redirecting…';
-                window.location.href = 'CPI.html';
+                window.location.href = 'DESKTOP/DASHBOARD.html';
+            });
+
+            document.getElementById('forgot-btn').addEventListener('click', async () => {
+                const errEl = document.getElementById('login-error');
+                const successEl = document.getElementById('login-success');
+                errEl.textContent = '';
+                successEl.textContent = '';
+
+                const email = document.getElementById('email').value.trim();
+                if (!email) {
+                    errEl.textContent = 'Enter your email first, then click “Forgot password?”.';
+                    return;
+                }
+
+                const redirectTo = window.location.origin + '/edge/CPI/reset_password.html';
+                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+                if (error) {
+                    errEl.textContent = error.message || 'Failed to send reset email.';
+                    return;
+                }
+                successEl.textContent = 'Password reset email sent. Check your inbox (and spam).';
             });
         }
     </script>

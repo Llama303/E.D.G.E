@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+    
+<!--Ai libreary-->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body class="themeable flex items-center justify-center min-h-screen">
     
@@ -46,14 +49,23 @@
             class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
 
         <!-- Phone number -->
-        <input type="tel" name="phone" id="phone" placeholder="Phone number" required 
-       class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+        <input
+            type="tel"
+            name="phone"
+            id="phone"
+            placeholder="Phone number"
+            required
+            class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
 
         <!-- Date of birth -->
-        <label class="block text-sm font-medium text-gray-200">
-            Date of birth
-            <input type="date" name="dob" id="dob" required class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-          </label>
+        <label class="block text-sm font-medium text-gray-200">Date of birth
+            <input
+                type="date"
+                name="dob"
+                id="dob"
+                required
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+        </label>
 
         <!-- Government ID type + number -->
         <div class="flex gap-2">
@@ -171,38 +183,28 @@
         <!-- Biometrics -->
         <h2 class="text-lg font-semibold text-white mt-4">Biometrics</h2>
 
-        <div class="mt-6 border-t border-gray-700 pt-4">
-            <h2 class="text-lg font-semibold text-white mb-2">Biometric Verification</h2>
-            
-            <label class="block text-sm font-medium text-gray-200">Verification Method
-                <select name="biometric_type" id="biometric_type" required class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f]">
-                    <option value="">Select method</option>
-                    <option value="photo">Upload Photo (Selfie)</option>
-                    <option value="fingerprint">Upload Fingerprint</option>
-                    <option value="face_scan">Live Face Scan</option>
-                </select>
-            </label>
-        
-            <div id="biometric_upload_container" class="mt-3">
-                <label class="block text-sm font-medium text-gray-200">
-                    <span id="biometric_file_label_text">Upload file</span>
-                    <input type="file" name="biometric_file" id="biometric_file" accept="image/*" class="mt-1 block w-full text-sm text-gray-400 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-[#2fa12f] file:text-white">
-                </label>
-            </div>
-           
-            <div id="face_scan_container" class="mt-3 hidden">
-                <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden border-2 border-gray-600">
-                    <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
-                    <canvas id="canvas" class="hidden"></canvas>
-                    <div id="scan_overlay" class="absolute inset-0 border-2 border-dashed border-[#2fa12f] opacity-50 rounded-full m-8 pointer-events-none"></div>
-                </div>
-                <div class="flex items-center justify-between mt-2">
-                    <button type="button" id="capture_btn" class="bg-[#2fa12f] text-white px-4 py-1.5 rounded-md hover:bg-[#3f7e42]">Capture Face</button>
-                    <span id="scan_status" class="text-xs text-yellow-400">Camera ready...</span>
-                </div>
-                <input type="hidden" name="face_scan_data" id="face_scan_data">
-            </div>
-        </div>
+        <label class="block text-sm font-medium text-gray-200">Biometric verification method
+            <select
+                name="biometric_type"
+                id="biometric_type"
+                required
+                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <option value="">Select method</option>
+                <option value="photo">Photo</option>
+                <option value="fingerprint">Fingerprint</option>
+                <option value="face_scan">Face scan</option>
+            </select>
+        </label>
+
+        <label id="biometric_file_label" class="block text-sm font-medium text-gray-200 mt-2"><span id="biometric_file_label_text">Upload verification file</span>
+            <input
+                type="file"
+                name="biometric_file"
+                id="biometric_file"
+                accept=".jpg,.jpeg,.png"
+                required
+                class="mt-1 block w-full text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#2fa12f] file:text-white hover:file:bg-[#3f7e42]">
+        </label>
 
         <label class="flex items-start gap-2 text-sm text-gray-200 cursor-pointer mt-4">
             <input
@@ -222,11 +224,7 @@
             Continue
         </button>
     </form>
-    <p class="auth-muted text-sm mt-4 text-center w-full">
-        Already have an account? <a href="login.html" class="text-[#2fa12f] underline hover:no-underline">Log in</a>.
-    </p>
     <script src="../themes.js"></script>
     <script src="Cpi.js"></script>
 </body>
 </html>
-  

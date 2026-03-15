@@ -20,3 +20,7 @@ try {
 } catch (PDOException $e) {
     die("Cloud database connection failed: " . $e->getMessage());
 }
+
+// Supabase Auth (for get_reference_face.php – verify user token and get email)
+$supabaseUrl = 'https://YOUR_PROJECT_REF.supabase.co';
+$supabaseAnonKey = 'YOUR_ANON_KEY'; // Same as in supabase_config.js
