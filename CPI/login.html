@@ -4,119 +4,155 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E.D.G.E - Log in</title>
+    
     <link rel="stylesheet" href="../Styl.css">
     <link rel="stylesheet" href="../EDGE.css">
     <link rel="stylesheet" href="../themes.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Platypi:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
-</head>s
+    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Platypi:wght@300..800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+
 <body class="themeable flex items-center justify-center min-h-screen">
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme" title="Toggle theme">
-        <span class="icon-sun" aria-hidden="true">☀</span>
-        <span class="icon-moon" aria-hidden="true">🌙</span>
-    </button>s
+    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">🌙</span>
+    </button>
 
     <div class="auth-card container rounded-lg p-6 flex flex-col items-center justify-center w-96 max-w-[96vw] shadow-xl border">
-        <h1 class="text-2xl font-bold cursor-default mb-3">E.D.G.E</h1>
-        <h2 class="text-xl font-semibold cursor-default mb-4 auth-muted">Log in</h2>
+        <h1 class="text-2xl font-bold mb-3">E.D.G.E</h1>
 
-        <div id="login-error" class="auth-error text-sm text-center min-h-[1.25rem] mb-2" aria-live="polite" role="alert"></div>
-        <div id="login-success" class="text-[#2fa12f] text-sm text-center min-h-[1.25rem] mb-2" aria-live="polite"></div>
+        <div id="login-container" class="w-full">
+            <h2 class="text-xl font-semibold mb-4 auth-muted text-center">Log in</h2>
+            <div id="login-error" class="auth-error text-sm text-center min-h-[1.25rem] mb-2" role="alert"></div>
+            <div id="login-success" class="text-[#2fa12f] text-sm text-center min-h-[1.25rem] mb-2"></div>
 
-        <form id="login-form" class="text-[#000000] space-y-3 w-full">
-            <input
-                type="email"
-                name="email"
-                id="email"
-                placeholder="Email address"
-                required
-                autocomplete="email"
-                class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-            <input
-                type="password"
-                name="password"
-                id="password"
-                placeholder="Password"
-                required
-                autocomplete="current-password"
-                class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-            <button
-                type="submit"
-                id="submit-btn"
-                class="w-full text-white bg-[#2fa12f] hover:bg-[#3f7e42] rounded-lg p-2.5 font-medium focus:ring-2 focus:ring-[#2fa12f] focus:outline-none transition-colors">
-                Log in
-            </button>
-            <button
-                type="button"
-                id="forgot-btn"
-                class="w-full text-[#2fa12f] bg-transparent hover:underline rounded-lg p-2 font-medium focus:outline-none transition-colors">
-                Forgot password?
-            </button>
-        </form>
+            <form id="login-form" class="space-y-3 w-full">
+                <input type="email" id="email" placeholder="Email address" required class="w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <input type="password" id="password" placeholder="Password" required class="w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+                <button type="submit" id="submit-btn" class="w-full text-white bg-[#2fa12f] hover:bg-[#3f7e42] rounded-lg p-2.5 font-medium transition-colors">
+                    Log in
+                </button>
+                <button type="button" id="forgot-btn" class="w-full text-[#2fa12f] hover:underline p-2">Forgot password?</button>
+            </form>
+        </div>
+
+        <div id="biometric-container" class="w-full hidden text-center">
+            <h2 class="text-xl font-semibold mb-4 auth-muted">Biometric Verification</h2>
+            <div class="relative inline-block mx-auto mb-4">
+                <video id="video" width="320" height="240" autoplay muted class="rounded-lg border-2 border-[#2fa12f] scale-x-[-1]"></video>
+            </div>
+            <p id="scan-status" class="text-sm italic text-gray-400">Initializing Security Scan...</p>
+        </div>
 
         <p class="auth-muted text-sm mt-4 text-center">
-            Don't have an account? <a href="CPI.html" class="text-[#2fa12f] underline hover:no-underline">Sign up</a> (complete CPI).
+            Don't have an account? <a href="CPI.html" class="text-[#2fa12f] underline hover:no-underline">Sign up</a>.
         </p>
     </div>
 
     <script src="../themes.js"></script>
     <script src="supabase_config.js"></script>
+    
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
         const url = window.SUPABASE_URL;
         const key = window.SUPABASE_ANON_KEY;
-        if (!url || !key || url.includes('YOUR_') || key.includes('YOUR_')) {
-            document.getElementById('login-error').textContent = 'Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in supabase_config.js';
-            document.getElementById('login-form').querySelector('button[type="submit"]').disabled = true;
-        } else {
-            const supabase = createClient(url, key);
+        const supabase = createClient(url, key);
 
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const errEl = document.getElementById('login-error');
-                const successEl = document.getElementById('login-success');
-                const btn = document.getElementById('submit-btn');
-                errEl.textContent = '';
-                successEl.textContent = '';
-                btn.disabled = true;
-                btn.textContent = 'Signing in…';
+        const loginForm = document.getElementById('login-form');
+        const loginContainer = document.getElementById('login-container');
+        const bioContainer = document.getElementById('biometric-container');
+        const scanStatus = document.getElementById('scan-status');
 
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById('login-error');
+            const btn = document.getElementById('submit-btn');
+            
+            errEl.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Verifying Credentials…';
 
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
 
-                if (error) {
-                    errEl.textContent = error.message || 'Login failed.';
-                    btn.disabled = false;
-                    btn.textContent = 'Log in';
-                    return;
-                }
-                successEl.textContent = 'Success. Redirecting…';
+            // 1. Authenticate with Supabase
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errEl.textContent = error.message;
+                btn.disabled = false;
+                btn.textContent = 'Log in';
+                return;
+            }
+
+            // 2. Check for saved face data
+            const { data: profile } = await supabase
+                .from('cpi_submissions')
+                .select('face_descriptor')
+                .eq('email', email)
+                .single();
+
+            if (profile && profile.face_descriptor) {
+                startFaceScan(JSON.parse(profile.face_descriptor));
+            } else {
+                // No face scan saved? Proceed to dashboard
                 window.location.href = 'DESKTOP/DASHBOARD.html';
-            });
+            }
+        });
 
-            document.getElementById('forgot-btn').addEventListener('click', async () => {
-                const errEl = document.getElementById('login-error');
-                const successEl = document.getElementById('login-success');
-                errEl.textContent = '';
-                successEl.textContent = '';
+        async function startFaceScan(savedDescriptor) {
+            loginContainer.classList.add('hidden');
+            bioContainer.classList.remove('hidden');
 
-                const email = document.getElementById('email').value.trim();
-                if (!email) {
-                    errEl.textContent = 'Enter your email first, then click “Forgot password?”.';
-                    return;
-                }
+            const video = document.getElementById('video');
+            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
 
-                const redirectTo = window.location.origin + '/edge/CPI/reset_password.html';
-                const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-                if (error) {
-                    errEl.textContent = error.message || 'Failed to send reset email.';
-                    return;
-                }
-                successEl.textContent = 'Password reset email sent. Check your inbox (and spam).';
+            // Load AI Models
+            await Promise.all([
+                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+                faceLandmarksDetection.createDetector(faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh, { runtime: 'tfjs' })
+            ]).then(async ([v1, rec, tfModel]) => {
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+
+                const runCheck = async () => {
+                    // Deepfake / Liveness Detection using TensorFlow
+                    const faces = await tfModel.estimateFaces(video);
+                    
+                    if (faces.length > 0) {
+                        // Z-depth check (Nose vs Ear distance in 3D space)
+                        const nose = faces[0].keypoints[1]; 
+                        const ear = faces[0].keypoints[234];
+                        const depth = Math.abs(nose.z - ear.z);
+
+                        if (depth < 12) { 
+                            scanStatus.textContent = "❌ Potential Deepfake/Screen detected.";
+                            scanStatus.style.color = "#ff4444";
+                        } else {
+                            scanStatus.textContent = "✅ Real Face Detected. Matching identity...";
+                            scanStatus.style.color = "#2fa12f";
+
+                            // Match the face descriptor
+                            const detection = await faceapi.detectSingleFace(video).withFaceDescriptor();
+                            if (detection) {
+                                const dist = faceapi.euclideanDistance(detection.descriptor, new Float32Array(savedDescriptor));
+                                if (dist < 0.5) {
+                                    scanStatus.textContent = "Identity Confirmed. Unlocking...";
+                                    setTimeout(() => { window.location.href = 'DESKTOP/DASHBOARD.html'; }, 1000);
+                                    return; // Success!
+                                }
+                            }
+                        }
+                    }
+                    requestAnimationFrame(runCheck);
+                };
+                runCheck();
             });
         }
     </script>
