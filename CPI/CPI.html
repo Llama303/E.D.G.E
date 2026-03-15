@@ -46,23 +46,13 @@
             class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
 
         <!-- Phone number -->
-        <input
-            type="tel"
-            name="phone"
-            id="phone"
-            placeholder="Phone number"
-            required
-            class="w-full p-2 rounded-lg focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+        <input type="tel" name="phone" id="phone" pattern="[0-9+\-\s()]{10,20}" placeholder="Phone number" required ...>
 
         <!-- Date of birth -->
-        <label class="block text-sm font-medium text-gray-200">Date of birth
-            <input
-                type="date"
-                name="dob"
-                id="dob"
-                required
-                class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-        </label>
+        <label class="block text-sm font-medium text-gray-200">
+            Date of birth
+            <input type="date" name="dob" id="dob" required class="mt-1 w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
+          </label>
 
         <!-- Government ID type + number -->
         <div class="flex gap-2">

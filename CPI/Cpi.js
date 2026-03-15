@@ -94,12 +94,13 @@
         messages.push('Please enter a valid email address (e.g. name@example.com).');
       }
 
-      var phoneDigits = phone ? phone.value.replace(/\D/g, '') : '';
-      if (!phone || !phone.value.trim()) {
-        messages.push('Please enter your phone number.');
-      } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
-        messages.push('Please enter a valid phone number (7–15 digits).');
-      }
+      var phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phone || !phone.value.trim()) {
+      messages.push('Please enter your phone number.');
+    } else if (!phoneRegex.test(phone.value.trim())) {
+      messages.push('Please enter a valid phone number.');
+    }
+
 
       if (!dob || !dob.value) {
         messages.push('Please provide your date of birth.');
@@ -122,6 +123,14 @@
       if (!proofOfAddress || !proofOfAddress.files || proofOfAddress.files.length === 0) {
         messages.push('Please upload proof of address.');
       }
+
+      if (proofOfAddress.files[0]) {
+        const proofName = proofOfAddress.files[0].name.toLowerCase();
+        if (!proofName.match(/\.(jpg|jpeg|png|pdf)$/)) {
+          messages.push('Proof of address must be JPG, PNG, or PDF.');
+        }
+      }
+      
 
       if (!employmentStatus || !employmentStatus.value) {
         messages.push('Please select your employment status.');
@@ -152,6 +161,13 @@
         messages.push('Please describe the expected nature of your transactions.');
       }
 
+      if (govIdFile.files[0]) {
+        const govIdName = govIdFile.files[0].name.toLowerCase();
+        if (!govIdName.match(/\.(jpg|jpeg|png|pdf)$/)) {
+          messages.push('Government ID must be JPG, PNG, or PDF.');
+        }
+      }
+
       var biometricType = document.getElementById('biometric_type');
       if (!biometricType || !biometricType.value) {
         messages.push('Please select a biometric verification method.');
@@ -159,6 +175,13 @@
         messages.push('Please upload your biometric verification file.');
       }
 
+      if (biometricFile.files[0]) {
+        const bioName = biometricFile.files[0].name.toLowerCase();
+        if (!bioName.match(/\.(jpg|jpeg|png)$/)) {
+          messages.push('Biometric file must be JPG, PNG only.');
+        }
+      }
+      
       var agreeTerms = document.getElementById('agree_terms');
       if (!agreeTerms || !agreeTerms.checked) {
         messages.push('You must read and agree to the Terms and Conditions to continue.');
