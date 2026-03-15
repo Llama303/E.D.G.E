@@ -2,159 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E.D.G.E - Log in</title>
-    
-    <link rel="stylesheet" href="../Styl.css">
-    <link rel="stylesheet" href="../edge.css">
-    <link rel="stylesheet" href="../themes.css">
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Oswald&family=Platypi:wght@300..800&display=swap" rel="stylesheet">
-
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <title>E.D.G.E | Secure Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .scanner-ring { border: 2px solid #00ff41; box-shadow: 0 0 15px #00ff41; }
+        .scan-line { position: absolute; width: 100%; height: 2px; background: #00ff41; top: 0; animation: scan 2s infinite linear; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+    </style>
 </head>
-
-<body class="themeable flex items-center justify-center min-h-screen">
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme">
-        <span class="icon-sun">☀</span>
-        <span class="icon-moon">🌙</span>
-    </button>
-
-    <div class="auth-card container rounded-lg p-6 flex flex-col items-center justify-center w-96 max-w-[96vw] shadow-xl border">
-        <h1 class="text-2xl font-bold mb-3">E.D.G.E</h1>
-
-        <div id="login-container" class="w-full">
-            <h2 class="text-xl font-semibold mb-4 auth-muted text-center">Log in</h2>
-            <div id="login-error" class="auth-error text-sm text-center min-h-[1.25rem] mb-2" role="alert"></div>
-            <div id="login-success" class="text-[#2fa12f] text-sm text-center min-h-[1.25rem] mb-2"></div>
-
-            <form id="login-form" class="space-y-3 w-full">
-                <input type="email" id="email" placeholder="Email address" required class="w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-                <input type="password" id="password" placeholder="Password" required class="w-full p-2 rounded-lg text-black focus:ring-2 focus:ring-[#2fa12f] focus:outline-none">
-                <button type="submit" id="submit-btn" class="w-full text-white bg-[#2fa12f] hover:bg-[#3f7e42] rounded-lg p-2.5 font-medium transition-colors">
-                    Log in
-                </button>
-                <button type="button" id="forgot-btn" class="w-full text-[#2fa12f] hover:underline p-2">Forgot password?</button>
-            </form>
-        </div>
-
-        <div id="biometric-container" class="w-full hidden text-center">
-            <h2 class="text-xl font-semibold mb-4 auth-muted">Biometric Verification</h2>
-            <div class="relative inline-block mx-auto mb-4">
-                <video id="video" width="320" height="240" autoplay muted class="rounded-lg border-2 border-[#2fa12f] scale-x-[-1]"></video>
-            </div>
-            <p id="scan-status" class="text-sm italic text-gray-400">Initializing Security Scan...</p>
-        </div>
-
-        <p class="auth-muted text-sm mt-4 text-center">
-            Don't have an account? <a href="cpi.html" class="text-[#2fa12f] underline hover:no-underline">Sign up</a>.
-        </p>
+<body class="bg-black text-white flex flex-col items-center justify-center min-h-screen">
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold tracking-widest text-[#00ff41]">AUTHENTICATION REQUIRED</h1>
+        <p class="text-gray-500 text-sm mt-2">SCAN FACE TO DECRYPT DESKTOP</p>
     </div>
 
-    <script src="../themes.js"></script>
-    <script src="supabase_config.js"></script>
+    <div class="relative scanner-ring rounded-full overflow-hidden w-[300px] h-[300px]">
+        <video id="video" class="w-full h-full object-cover scale-x-[-1]" autoplay muted></video>
+        <div class="scan-line"></div>
+    </div>
+
+    <div id="status" class="mt-6 font-mono text-sm text-gray-400 uppercase">Detecting Hardware...</div>
     
+    <button id="login-btn" class="mt-8 bg-[#00ff41] text-black px-10 py-3 rounded-sm font-bold hover:bg-green-400 transition-all">
+        VERIFY IDENTITY
+    </button>
+
+    <script src="../supabase_config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <script type="module">
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-        const url = window.SUPABASE_URL;
-        const key = window.SUPABASE_ANON_KEY;
-        const supabase = createClient(url, key);
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const loginBtn = document.getElementById('login-btn');
 
-        const loginForm = document.getElementById('login-form');
-        const loginContainer = document.getElementById('login-container');
-        const bioContainer = document.getElementById('biometric-container');
-        const scanStatus = document.getElementById('scan-status');
+        async function init() {
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/models/';
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+            ]);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            status.innerText = "BIOMETRIC SCANNER READY";
+        }
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const errEl = document.getElementById('login-error');
-            const btn = document.getElementById('submit-btn');
+        loginBtn.addEventListener('click', async () => {
+            status.innerText = "MATCHING BIOMETRICS...";
             
-            errEl.textContent = '';
-            btn.disabled = true;
-            btn.textContent = 'Verifying Credentials…';
+            // Get last registered user for testing
+            const { data } = await supabase.from('cpi_submissions').select('face_descriptor, full_name').order('created_at', { ascending: false }).limit(1).single();
 
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+            if (!data) { status.innerText = "NO RECORD FOUND"; return; }
 
-            // 1. Authenticate with Supabase
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
 
-            if (error) {
-                errEl.textContent = error.message;
-                btn.disabled = false;
-                btn.textContent = 'Log in';
-                return;
-            }
-
-            // 2. Check for saved face data
-            const { data: profile } = await supabase
-                .from('cpi_submissions')
-                .select('face_descriptor')
-                .eq('email', email)
-                .single();
-
-            if (profile && profile.face_descriptor) {
-                startFaceScan(JSON.parse(profile.face_descriptor));
+            if (detection) {
+                const distance = faceapi.euclideanDistance(new Float32Array(JSON.parse(data.face_descriptor)), detection.descriptor);
+                if (distance < 0.6) {
+                    status.innerText = "IDENTITY CONFIRMED";
+                    sessionStorage.setItem('isVerified', 'true');
+                    setTimeout(() => window.location.href = '../DESKTOP/desktop.html', 1000);
+                } else {
+                    status.innerText = "MATCH FAILED";
+                }
             } else {
-                // No face scan saved? Proceed to dashboard
-                window.location.href = 'desktop/dashboard.html';
+                status.innerText = "FACE NOT DETECTED";
             }
         });
-
-        async function startFaceScan(savedDescriptor) {
-            loginContainer.classList.add('hidden');
-            bioContainer.classList.remove('hidden');
-
-            const video = document.getElementById('video');
-            const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-
-            // Load AI Models
-            await Promise.all([
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                faceLandmarksDetection.createDetector(faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh, { runtime: 'tfjs' })
-            ]).then(async ([v1, rec, tfModel]) => {
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-
-                const runCheck = async () => {
-                    // Deepfake / Liveness Detection using TensorFlow
-                    const faces = await tfModel.estimateFaces(video);
-                    
-                    if (faces.length > 0) {
-                        // Z-depth check (Nose vs Ear distance in 3D space)
-                        const nose = faces[0].keypoints[1]; 
-                        const ear = faces[0].keypoints[234];
-                        const depth = Math.abs(nose.z - ear.z);
-
-                        if (depth < 12) { 
-                            scanStatus.textContent = "❌ Potential Deepfake/Screen detected.";
-                            scanStatus.style.color = "#ff4444";
-                        } else {
-                            scanStatus.textContent = "✅ Real Face Detected. Matching identity...";
-                            scanStatus.style.color = "#2fa12f";
-
-                            // Match the face descriptor
-                            const detection = await faceapi.detectSingleFace(video).withFaceDescriptor();
-                            if (detection) {
-                                const dist = faceapi.euclideanDistance(detection.descriptor, new Float32Array(savedDescriptor));
-                                if (dist < 0.5) {
-                                    scanStatus.textContent = "Identity Confirmed. Unlocking...";
-                                    setTimeout(() => { window.location.href = 'desktop/dashboard.html'; }, 1000);
-                                    return; // Success!
-                                }
-                            }
-                        }
-                    }
-                    requestAnimationFrame(runCheck);
-                };
-                runCheck();
-            });
-        }
+        init();
     </script>
 </body>
 </html>
