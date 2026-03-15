@@ -1,0 +1,15 @@
+# --- Do not push (security) ---
+CPI/config.php
+CPI/supabase_config.js
+CPI/uploads/
+.env
+.env.local
+.env.*.local
+
+# --- Dependencies / generated ---
+node_modules/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.log
