@@ -189,7 +189,7 @@
                     <input type="file" name="biometric_file" id="biometric_file" accept="image/*" class="mt-1 block w-full text-sm text-gray-400 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-[#2fa12f] file:text-white">
                 </label>
             </div>
-        
+           
             <div id="face_scan_container" class="mt-3 hidden">
                 <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden border-2 border-gray-600">
                     <video id="video" class="w-full h-full object-cover" autoplay playsinline></video>
@@ -200,7 +200,7 @@
                     <button type="button" id="capture_btn" class="bg-[#2fa12f] text-white px-4 py-1.5 rounded-md hover:bg-[#3f7e42]">Capture Face</button>
                     <span id="scan_status" class="text-xs text-yellow-400">Camera ready...</span>
                 </div>
-                <input type="hidden" name="face_scan_blob" id="face_scan_blob">
+                <input type="hidden" name="face_scan_data" id="face_scan_data">
             </div>
         </div>
 

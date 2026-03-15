@@ -1,67 +1,106 @@
 <?php
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/config.php';
 
 try {
-    $pdo = new PDO($dsn, $dbUser, $dbPass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-} catch (PDOException $e) { die('Connection failed.'); }
+    $pdo = new PDO($dsn, $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    ]);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
+}
 
 function fail($msg) {
     header("Location: CPI.html?error=" . urlencode($msg));
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Invalid request.');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Invalid request method.');
 
-// 1. DATA VALIDATION (Log-in/Identity Information)
-$full_name = trim($_POST['full_name'] ?? '');
-$email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
-$dob = $_POST['dob'] ?? '';
+// 1. COLLECT & SANITIZE TEXT DATA
+$full_name      = trim($_POST['full_name'] ?? '');
+$email          = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+$phone          = trim($_POST['phone'] ?? '');
+$dob            = $_POST['dob'] ?? '';
+$gov_id_type    = $_POST['gov_id_type'] ?? '';
+$gov_id_number  = trim($_POST['gov_id_number'] ?? '');
+$emp_status     = $_POST['employment_status'] ?? '';
+$occupation     = $_POST['occupation'] ?? null;
+$employer       = $_POST['employer_name'] ?? null;
+$income         = $_POST['income_sources'] ?? '';
+$purpose        = $_POST['account_purpose'] ?? '';
+$nature         = $_POST['transaction_nature'] ?? '';
+$biometric_type = $_POST['biometric_type'] ?? '';
 
-if (!$full_name || !$email || !$dob) fail('Please complete all identity fields.');
-
-// 2. FILE HANDLING
-$uploadDir = __DIR__ . '/uploads';
-if (!is_dir($uploadDir)) mkdir($uploadDir, 0775, true);
-
-function process_upload($key, $dir) {
-    if (!isset($_FILES[$key]) || $_FILES[$key]['error'] !== UPLOAD_ERR_OK) return null;
-    $ext = pathinfo($_FILES[$key]['name'], PATHINFO_EXTENSION);
-    $path = 'uploads/' . $key . '_' . time() . '.' . $ext;
-    move_uploaded_file($_FILES[$key]['tmp_name'], __DIR__ . '/' . $path);
-    return $path;
+// 2. DIRECTORY SETUP
+$uploadDir = __DIR__ . '/uploads/';
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0775, true);
 }
 
-$gov_id_path = process_upload('gov_id_file', $uploadDir);
-$address_path = process_upload('proof_of_address', $uploadDir);
+// Helper function for standard file uploads
+function handle_file_upload($key, $uploadDir) {
+    if (!isset($_FILES[$key]) || $_FILES[$key]['error'] !== UPLOAD_ERR_OK) {
+        return null;
+    }
+    $fileName = time() . '_' . basename($_FILES[$key]['name']);
+    $targetPath = $uploadDir . $fileName;
+    if (move_uploaded_file($_FILES[$key]['tmp_name'], $targetPath)) {
+        return 'uploads/' . $fileName;
+    }
+    return null;
+}
 
-if (!$gov_id_path || !$address_path) fail('ID and Proof of Address files are required.');
+// 3. PROCESS UPLOADS
+$gov_id_path = handle_file_upload('gov_id_file', $uploadDir);
+$address_path = handle_file_upload('proof_of_address', $uploadDir);
 
-// 3. BIOMETRIC HANDLING (Face Scan vs. Upload)
-$biometric_type = $_POST['biometric_type'] ?? '';
-$biometric_path = '';
+// 4. PROCESS BIOMETRICS (The "Live Scan" vs "File" logic)
+$biometric_path = null;
 
 if ($biometric_type === 'face_scan') {
-    $data = $_POST['face_scan_data'] ?? '';
-    if (strpos($data, 'data:image/jpeg;base64,') === 0) {
-        $data = base64_decode(str_replace('data:image/jpeg;base64,', '', $data));
-        $biometric_path = 'uploads/face_' . time() . '.jpg';
-        file_put_contents(__DIR__ . '/' . $biometric_path, $data);
+    $base64Data = $_POST['face_scan_data'] ?? '';
+    if (!empty($base64Data)) {
+        // Remove the "data:image/jpeg;base64," part
+        $data = str_replace('data:image/jpeg;base64,', '', $base64Data);
+        $data = str_replace(' ', '+', $data);
+        $decodedData = base64_decode($data);
+        $fileName = 'face_capture_' . time() . '.jpg';
+        file_put_contents($uploadDir . $fileName, $decodedData);
+        $biometric_path = 'uploads/' . $fileName;
     }
 } else {
-    $biometric_path = process_upload('biometric_file', $uploadDir);
+    $biometric_path = handle_file_upload('biometric_file', $uploadDir);
 }
 
-if (!$biometric_path) fail('Biometric verification is incomplete.');
+// Check if critical items are missing
+if (!$gov_id_path) fail("Government ID file is missing or failed to upload.");
+if (!$biometric_path) fail("Biometric verification (Scan or File) is missing.");
 
-// 4. DATABASE INSERTION
-$stmt = $pdo->prepare("INSERT INTO cpi_submissions (full_name, email, phone, dob, gov_id_type, gov_id_number, gov_id_file_path, proof_of_address_path, employment_status, occupation, employer_name, income_sources, account_purpose, transaction_nature, biometric_type, biometric_file_path) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+// 5. DATABASE INSERT
+try {
+    $sql = "INSERT INTO cpi_submissions (
+        full_name, email, phone, dob, gov_id_type, gov_id_number, 
+        gov_id_file_path, proof_of_address_path, employment_status, 
+        occupation, employer_name, income_sources, account_purpose, 
+        transaction_nature, biometric_type, biometric_file_path
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-$stmt->execute([
-    $full_name, $email, $_POST['phone'], $dob, $_POST['gov_id_type'], $_POST['gov_id_number'],
-    $gov_id_path, $address_path, $_POST['employment_status'], $_POST['occupation'],
-    $_POST['employer_name'], $_POST['income_sources'], $_POST['account_purpose'], 
-    $_POST['transaction_nature'], $biometric_type, $biometric_path
-]);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $full_name, $email, $phone, $dob, $gov_id_type, $gov_id_number,
+        $gov_id_path, $address_path, $emp_status, $occupation, 
+        $employer, $income, $purpose, $nature, $biometric_type, $biometric_path
+    ]);
 
-header("Location: CPI.html?success=" . urlencode("Registration Successful"));
+    header("Location: CPI.html?success=" . urlencode("Form submitted and saved successfully!"));
+    exit;
+
+} catch (PDOException $e) {
+    // This will print the SQL error if the insert fails
+    fail("Database Error: " . $e->getMessage());
+}

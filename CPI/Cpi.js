@@ -49,6 +49,21 @@
   }
 
   captureBtn.addEventListener('click', function() {
+    // ... inside your capture button event listener ...
+captureBtn.addEventListener('click', function() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  
+  // Convert to Base64
+  const dataUrl = canvas.toDataURL('image/jpeg');
+  
+  // CRITICAL: Put this data into the hidden input so PHP can see it
+  document.getElementById('face_scan_data').value = dataUrl;
+  
+  scanStatus.textContent = "✅ Captured!";
+  scanStatus.style.color = "#2fa12f";
+});
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       canvas.getContext('2d').drawImage(video, 0, 0);
