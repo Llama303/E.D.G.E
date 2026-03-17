@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E.D.G.E. Bank — Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --text: #f0f0f0;
+      --text-light: #a0a0a0;
+      --green: #22c55e;
+      --green-dark: #16a34a;
+      --accent: #22c55e;
+      --border: #333;
+      --shadow: rgba(0,0,0,0.6);
+      --dropdown-bg: #222;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --text: #111111;
+      --text-light: #6b7280;
+      --green: #15803d;
+      --green-dark: #166534;
+      --accent: #15803d;
+      --border: #e5e7eb;
+      --shadow: rgba(0,0,0,0.08);
+      --dropdown-bg: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.4s ease, color 0.4s ease;
+      padding-bottom: 90px;
+    }
+
+    .header {
+      background: var(--card);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    .header h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theme-toggle, .profile-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--text);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.3s;
+    }
+
+    .theme-toggle:hover, .profile-btn:hover {
+      background: rgba(150,150,150,0.15);
+    }
+
+    .icon-sun, .icon-moon {
+      transition: opacity 0.4s ease;
+    }
+
+    [data-theme="dark"] .icon-sun  { opacity: 0; position: absolute; }
+    [data-theme="light"] .icon-moon { opacity: 0; position: absolute; }
+
+    .profile-dropdown {
+      position: relative;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--dropdown-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 20px var(--shadow);
+      min-width: 220px;
+      overflow: hidden;
+      z-index: 200;
+      display: none;
+      margin-top: 8px;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 0.9rem 1.3rem;
+      color: var(--text);
+      text-decoration: none;
+      display: block;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: rgba(100,100,100,0.2);
+    }
+
+    .dropdown-item.logout {
+      color: #ef4444;
+      border-top: 1px solid var(--border);
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    .balance-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 1.8rem 1.6rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1.8rem;
+      text-align: center;
+      box-shadow: 0 8px 20px var(--shadow);
+    }
+
+    .balance-label {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .balance-amount {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0.4rem 0;
+      letter-spacing: -1px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin: 1.6rem 0 0.8rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      flex: 1;
+    }
+
+    .stat-item + .stat-item {
+      border-left: 1px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .stat-value.positive { color: var(--green); }
+    .stat-value.negative { color: #ef4444; }
+
+    .budget-section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.8rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 16px var(--shadow);
+    }
+
+    .budget-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+    }
+
+    .budget-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .budget-remaining {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .progress-ring {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: conic-gradient(var(--green) 0% 65%, var(--border) 65% 100%);
+      margin: 0 auto 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-inner {
+      width: 84px;
+      height: 84px;
+      background: var(--card);
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .tip-box {
+      background: rgba(34,197,94,0.12);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      border-left: 4px solid var(--green);
+      color: var(--text);
+    }
+
+    .transactions {
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 16px var(--shadow);
+    }
+
+    .trans-header {
+      padding: 1.2rem 1.5rem;
+      background: rgba(30,30,30,0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+
+    [data-theme="light"] .trans-header {
+      background: #f1f5f9;
+    }
+
+    .trans-item {
+      display: flex;
+      align-items: center;
+      padding: 1.1rem 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .trans-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-right: 1rem;
+    }
+
+    .trans-food    { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .trans-income  { background: rgba(34,197,94,0.15); color: var(--green); }
+    .trans-transport { background: rgba(59,130,246,0.15); color: #3b82f6; }
+
+    .trans-details {
+      flex: 1;
+    }
+
+    .trans-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .trans-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-light);
+    }
+
+    .trans-amount {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .trans-amount.positive { color: var(--green); }
+    .trans-amount.negative { color: #ef4444; }
+
+    .fab-bar {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      border-radius: 999px;
+      padding: 0.8rem 1.8rem;
+      box-shadow: 0 10px 30px var(--shadow);
+      display: flex;
+      gap: 1.5rem;
+      z-index: 90;
+      border: 1px solid var(--border);
+    }
+
+    .fab-btn {
+      background: var(--green);
+      color: white;
+      border: none;
+      padding: 0.9rem 1.6rem;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s;
+    }
+
+    .fab-btn.orange {
+      background: #ea580c;
+    }
+
+    .fab-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 1.2rem 0.9rem; }
+      .balance-amount { font-size: 2.4rem; }
+      .budget-remaining { font-size: 1.8rem; }
+    }
+
+    /* Face verification gate */
+    #face-verify-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: opacity 0.3s ease;
+    }
+    #face-verify-overlay.hidden { display: none; }
+    #face-verify-overlay .verify-title { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    #face-verify-overlay .verify-subtitle { color: var(--text-light); font-size: 0.95rem; margin-bottom: 1.5rem; text-align: center; }
+    #face-verify-overlay .video-wrap {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 3/4;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    #face-verify-overlay .video-wrap video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    #face-verify-overlay .video-wrap canvas { display: none; }
+    #face-verify-overlay .verify-status { min-height: 1.5rem; font-size: 0.9rem; margin-bottom: 0.75rem; text-align: center; }
+    #face-verify-overlay .verify-status.error { color: #ef4444; }
+    #face-verify-overlay .verify-status.ok { color: var(--green); }
+    #face-verify-overlay .verify-btn {
+      background: var(--green);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    #face-verify-overlay .verify-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    #dashboard-content { display: none; }
+    #dashboard-content.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Face verification gate (shown first) -->
+  <div id="face-verify-overlay">
+    <h2 class="verify-title">Face verification</h2>
+    <p class="verify-subtitle">Look at the camera and click Verify to access your account.</p>
+    <div class="video-wrap">
+      <video id="verify-video" autoplay playsinline muted></video>
+      <canvas id="verify-canvas"></canvas>
+    </div>
+    <div id="verify-status" class="verify-status"></div>
+    <button type="button" id="verify-btn" class="verify-btn">Verify my face</button>
+  </div>
+
+  <div id="dashboard-content">
+  <div class="header">
+    <h1>Welcome Back, Jay</h1>
+    <div class="header-right">
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark/light theme" title="Toggle theme">
+        <span class="icon-sun" aria-hidden="true">☀</span>
+        <span class="icon-moon" aria-hidden="true">🌙</span>
+      </button>
+
+      <div class="profile-dropdown">
+        <button type="button" id="profile-btn" class="profile-btn" aria-label="Profile menu" title="Profile">
+          <i class="fa-solid fa-user-circle"></i>
+        </button>
+
+        <div class="dropdown-menu" id="dropdown-menu">
+          <a href="../UPDATE_PERSONAL_INFO/UPDATE_PERSONAL_INFO.html" class="dropdown-item">Update personal information</a>
+          <a href="../UPDATE_PASSWORD/UPDATE_PASSWORD.html" class="dropdown-item">Update password and biometrics</a>
+          <a href="../login.html" id="logout-link" class="dropdown-item logout">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- The rest of the dashboard content remains unchanged -->
+
+    <div class="balance-card">
+      <div class="balance-label">Total Balance</div>
+      <div class="balance-amount" id="total-balance">$11,777.67</div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">Income ↑</div>
+          <div class="stat-value positive">+$5,000.00</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Expenses ↓</div>
+          <div class="stat-value negative">-$3,582.52</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="budget-section">
+      <div class="budget-header">
+        <div class="budget-title">Budget Remaining</div>
+        <button style="background:none;border:none;color:var(--accent);font-weight:600;cursor:pointer;font-size:0.9rem;">View Full Budget →</button>
+      </div>
+
+      <div class="progress-ring">
+        <div class="progress-inner">65%</div>
+      </div>
+
+      <div class="budget-remaining" id="remaining">$3,482.50</div>
+
+      <div class="tip-box">
+        <strong>Tip:</strong> Cutting transport by 10% could save you ~$200/month
+      </div>
+    </div>
+
+    <div class="transactions">
+      <div class="trans-header">
+        <span>Recent Transactions</span>
+        <span style="color:var(--accent);font-size:0.9rem;cursor:pointer;">See all →</span>
+      </div>
+
+      <div class="trans-item">
+        <div class="trans-icon trans-food"><i class="fa-solid fa-coffee"></i></div>
+        <div class="trans-details">
+          <div class="trans-title">Starbucks</div>
+          <div class="trans-subtitle">Food • Today</div>
+        </div>
+        <div class="trans-amount negative">-$1,955.50</div>
+      </div>
+
+      <div class="trans-item">
+        <div class="trans-icon trans-income"><i class="fa-solid fa-arrow-down"></i></div>
+        <div class="trans-details">
+          <div class="trans-title">Salary Deposit</div>
+          <div class="trans-subtitle">Income • Yesterday</div>
+        </div>
+        <div class="trans-amount positive">+$5,000.00</div>
+      </div>
+
+      <div class="trans-item">
+        <div class="trans-icon trans-transport"><i class="fa-solid fa-car"></i></div>
+        <div class="trans-details">
+          <div class="trans-title">InDrive</div>
+          <div class="trans-subtitle">Transport • Yesterday</div>
+        </div>
+        <div class="trans-amount negative">-$650.00</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="fab-bar">
+    <button class="fab-btn"><i class="fa-solid fa-plus"></i> Income</button>
+    <button class="fab-btn orange"><i class="fa-solid fa-minus"></i> Expense</button>
+  </div>
+  </div>
+
+  <script src="../supabase_config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script type="module">
+    (async function() {
+      const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+      const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+      const overlay = document.getElementById('face-verify-overlay');
+      const dashboardContent = document.getElementById('dashboard-content');
+      const video = document.getElementById('verify-video');
+      const canvas = document.getElementById('verify-canvas');
+      const statusEl = document.getElementById('verify-status');
+      const verifyBtn = document.getElementById('verify-btn');
+
+      const FACE_MATCH_THRESHOLD = 0.65;
+      const MODELS_BASE = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/models/';
+
+      if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY || window.SUPABASE_URL.includes('YOUR_')) {
+        statusEl.textContent = 'Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in supabase_config.js.';
+        statusEl.className = 'verify-status error';
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      function setStatus(msg, isError) {
+        statusEl.textContent = msg;
+        statusEl.className = 'verify-status' + (isError ? ' error' : ' ok');
+      }
+
+      function showDashboard() {
+        overlay.classList.add('hidden');
+        dashboardContent.classList.add('visible');
+        if (video.srcObject) {
+          video.srcObject.getTracks().forEach(t => t.stop());
+        }
+      }
+
+      try {
+        setStatus('Loading face recognition…', false);
+        await Promise.all([
+          faceApi.nets.tinyFaceDetector.loadFromUri(MODELS_BASE),
+          faceApi.nets.faceLandmark68Net.loadFromUri(MODELS_BASE),
+          faceApi.nets.faceRecognitionNet.loadFromUri(MODELS_BASE)
+        ]);
+      } catch (e) {
+        setStatus('Failed to load face models.', true);
+        return;
+      }
+
+      const refRes = await fetch('../get_reference_face.php', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      if (!refRes.ok) {
+        const err = await refRes.json().catch(() => ({}));
+        setStatus(err.error || 'No reference face on file. Complete CPI signup first.', true);
+        verifyBtn.disabled = true;
+        return;
+      }
+      const refBlob = await refRes.blob();
+      const refUrl = URL.createObjectURL(refBlob);
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
+        setStatus('Camera ready. Click "Verify my face".', false);
+      } catch (e) {
+        setStatus('Camera access denied.', true);
+        verifyBtn.disabled = true;
+        return;
+      }
+
+      verifyBtn.addEventListener('click', async () => {
+        verifyBtn.disabled = true;
+        setStatus('Verifying…', false);
+
+        const refImg = await faceApi.fetchImage(refUrl);
+        let refDesc;
+        try {
+          const refDet = await faceApi.detectSingleFace(refImg).withFaceLandmarks().withFaceDescriptor();
+          if (!refDet) {
+            setStatus('No face found in reference image.', true);
+            verifyBtn.disabled = false;
+            return;
+          }
+          refDesc = refDet.descriptor;
+        } catch (e) {
+          setStatus('Reference face error.', true);
+          verifyBtn.disabled = false;
+          return;
+        }
+
+        const w = video.videoWidth, h = video.videoHeight;
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -w, 0, w, h);
+        ctx.restore();
+
+        const captureDet = await faceApi.detectSingleFace(canvas).withFaceLandmarks().withFaceDescriptor();
+        if (!captureDet) {
+          setStatus('No face detected. Look at the camera and try again.', true);
+          verifyBtn.disabled = false;
+          return;
+        }
+
+        const distance = faceApi.euclideanDistance(refDesc, captureDet.descriptor);
+        if (distance <= FACE_MATCH_THRESHOLD) {
+          setStatus('Match! Opening dashboard…', false);
+          sessionStorage.setItem('faceVerified', '1');
+          showDashboard();
+        } else {
+          setStatus('Face not recognized. Please try again.', true);
+          verifyBtn.disabled = false;
+        }
+      });
+
+      if (sessionStorage.getItem('faceVerified') === '1') {
+        showDashboard();
+      }
+
+      window.__supabase = supabase;
+    })();
+  </script>
+  <script>
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    themeToggle.addEventListener('click', () => {
+      const current = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+
+    // Profile dropdown
+    const profileBtn = document.getElementById('profile-btn');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+
+    profileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!profileBtn.contains(e.target)) {
+        dropdownMenu.classList.remove('show');
+      }
+    });
+
+    // Logout: sign out and clear face verification
+    document.getElementById('logout-link').addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (window.__supabase) {
+        await window.__supabase.auth.signOut();
+        sessionStorage.removeItem('faceVerified');
+      }
+      window.location.href = '../login.html';
+    });
+  </script>
+
+</body>
+</html>

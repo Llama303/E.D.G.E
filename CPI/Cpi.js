@@ -1,110 +1,188 @@
 (function () {
-  const form = document.querySelector('form[action="verify_identity.php"]');
-  const errorEl = document.getElementById('signup-error');
-  
-  // Form Fields
-  const bioType = document.getElementById('biometric_type');
-  const bioFileCont = document.getElementById('biometric_upload_container');
-  const faceScanCont = document.getElementById('face_scan_container');
-  const bioFile = document.getElementById('biometric_file');
-  const faceDataInput = document.getElementById('face_scan_data');
-  
-  // Camera Elements
+  // --- 1. SUPABASE CONFIG ---
+  // Replace these with your actual Supabase Project URL and Anon Key
+  const supabaseUrl = 'YOUR_SUPABASE_URL';
+  const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+  const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+  // --- 2. URL PARAMS & UTILS ---
+  var params = new URLSearchParams(window.location.search);
+  var errorEl = document.getElementById('signup-error');
+  var successEl = document.getElementById('signup-success');
+  var error = params.get('error');
+  var success = params.get('success');
+  if (error && errorEl) errorEl.textContent = decodeURIComponent(error);
+  if (success && successEl) successEl.textContent = decodeURIComponent(success);
+
+  function yearsBetween(dateString) {
+      var dob = new Date(dateString);
+      if (isNaN(dob.getTime())) return 0;
+      var diff = Date.now() - dob.getTime();
+      var ageDate = new Date(diff);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
+  }
+
+  // --- 3. FACE SCAN GLOBALS ---
   const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const captureBtn = document.getElementById('capture_btn');
-  const scanStatus = document.getElementById('scan_status');
-  let stream = null;
+  const scanBtn = document.getElementById('scan-btn');
+  const descriptorInput = document.getElementById('face_descriptor_input');
+  const statusText = document.getElementById('scan-status');
 
-  // --- 1. BIOMETRIC TOGGLE LOGIC ---
-  bioType.addEventListener('change', function() {
-      if (this.value === 'face_scan') {
-          bioFileCont.style.display = 'none';
-          faceScanCont.style.display = 'block';
-          bioFile.required = false;
-          startCamera();
-      } else {
-          bioFileCont.style.display = 'block';
-          faceScanCont.style.display = 'none';
-          bioFile.required = !!this.value;
-          stopCamera();
-      }
-  });
-
-  async function startCamera() {
+  async function initAI() {
       try {
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          video.srcObject = stream;
-          scanStatus.textContent = "Camera ready.";
+          if (!statusText) return;
+          statusText.textContent = "Loading security models...";
+          const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+          
+          await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+          await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+          await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+          
+          startVideo();
       } catch (err) {
-          scanStatus.textContent = "Error: Camera access denied.";
+          if (statusText) statusText.textContent = "AI Initialization failed.";
+          console.error(err);
       }
   }
 
-  function stopCamera() {
-      if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          stream = null;
-      }
+  function startVideo() {
+      navigator.mediaDevices.getUserMedia({ video: {} })
+          .then(stream => {
+              if (video) video.srcObject = stream;
+              if (statusText) statusText.textContent = "Camera active. Center your face.";
+          })
+          .catch(err => {
+              if (statusText) statusText.textContent = "Camera Error: Check permissions.";
+          });
   }
 
-  captureBtn.addEventListener('click', function() {
-    // ... inside your capture button event listener ...
-captureBtn.addEventListener('click', function() {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  
-  // Convert to Base64
-  const dataUrl = canvas.toDataURL('image/jpeg');
-  
-  // CRITICAL: Put this data into the hidden input so PHP can see it
-  document.getElementById('face_scan_data').value = dataUrl;
-  
-  scanStatus.textContent = "✅ Captured!";
-  scanStatus.style.color = "#2fa12f";
-});
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      faceDataInput.value = canvas.toDataURL('image/jpeg');
-      scanStatus.textContent = "✅ Face Captured!";
-      scanStatus.style.color = "#22c55e";
-  });
+  // --- 4. FORM VALIDATION & SUPABASE SUBMISSION ---
+  function initFormValidation() {
+      var form = document.querySelector('form'); // Removed the action check since we're using JS now
+      if (!form) return;
 
-  // --- 2. FULL DATA VALIDATION ---
-  form.addEventListener('submit', function (e) {
-      errorEl.textContent = '';
-      let messages = [];
+      var employmentStatus = document.getElementById('employment_status');
+      var occupation = document.getElementById('occupation');
+      var employerName = document.getElementById('employer_name');
+      var biometricType = document.getElementById('biometric_type');
+      var faceScannerSection = document.getElementById('face-scanner-section');
+      var uploadSection = document.getElementById('biometric-upload-section');
+      var biometricFile = document.getElementById('biometric_file');
 
-      // Validate Identity Info
-      const fullName = document.getElementById('full_name').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const dob = document.getElementById('dob').value;
-      
-      if (fullName.length < 2) messages.push("Full name is too short.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) messages.push("Invalid email format.");
-      
-      // Check Age (18+)
-      const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
-      if (isNaN(age) || age < 18) messages.push("You must be 18 years or older.");
-
-      // Validate Required Files (ID and Proof of Address)
-      if (document.getElementById('gov_id_file').files.length === 0) {
-          messages.push("Government ID upload is required.");
+      // Visibility Logic
+      if (employmentStatus) {
+          employmentStatus.addEventListener('change', function() {
+              var status = this.value;
+              var hideFields = status === 'retired' || status === 'unemployed';
+              occupation.parentElement.style.display = hideFields ? 'none' : 'block';
+              employerName.style.display = hideFields ? 'none' : 'block';
+          });
       }
 
-      // Validate Selected Biometric
-      if (bioType.value === 'face_scan') {
-          if (!faceDataInput.value) messages.push("Please capture your face scan.");
-      } else if (bioType.value && bioFile.files.length === 0) {
-          messages.push("Please upload your biometric file.");
+      if (biometricType) {
+          biometricType.addEventListener('change', function() {
+              if (this.value === 'face') {
+                  if (faceScannerSection) faceScannerSection.style.display = 'block';
+                  if (uploadSection) uploadSection.style.display = 'none';
+                  initAI(); 
+              } else {
+                  if (faceScannerSection) faceScannerSection.style.display = 'none';
+                  if (uploadSection) uploadSection.style.display = 'block';
+                  if (video && video.srcObject) {
+                      video.srcObject.getTracks().forEach(track => track.stop());
+                      video.srcObject = null;
+                  }
+              }
+          });
       }
 
-      if (messages.length > 0) {
-          e.preventDefault();
-          errorEl.textContent = messages[0];
-          window.scrollTo(0, 0);
-      }
-  });
+      // --- THE SUBMIT HANDLER ---
+      form.addEventListener('submit', async function (e) {
+          e.preventDefault(); // STOP GITHUB FROM LOOKING FOR PHP
+          
+          var messages = [];
+          const MAX_SIZE = 5 * 1024 * 1024; // 5MB limit
+          var selectedMethod = biometricType ? biometricType.value : '';
+
+          // 1. Validations
+          if (selectedMethod === 'face') {
+              if (!descriptorInput.value) messages.push("Please 'Capture Face Map'.");
+          } else if (!biometricFile.files.length) {
+              messages.push("Please upload biometric file.");
+          }
+
+          var dob = document.getElementById('dob');
+          if (!dob || yearsBetween(dob.value) < 18) messages.push('Must be 18+ years old.');
+
+          var govIdFile = document.getElementById('gov_id_file');
+          if (!govIdFile.files.length) messages.push("Upload Gov ID.");
+          else if (govIdFile.files[0].size > MAX_SIZE) messages.push("ID file exceeds 5MB.");
+
+          if (!document.getElementById('agree_terms').checked) messages.push('Agree to terms.');
+
+          if (messages.length > 0) {
+              alert(messages[0]);
+              return;
+          }
+
+          // 2. SUPABASE UPLOAD & SAVE
+          try {
+              if (statusText) statusText.textContent = "Uploading data securely...";
+              
+              // Upload ID File
+              const idFile = govIdFile.files[0];
+              const fileExt = idFile.name.split('.').pop();
+              const fileName = `${Date.now()}.${fileExt}`;
+              
+              const { data: uploadData, error: uploadError } = await _supabase.storage
+                  .from('id-documents')
+                  .upload(`ids/${fileName}`, idFile);
+
+              if (uploadError) throw uploadError;
+
+              // Save Row to Database
+              const { error: dbError } = await _supabase
+                  .from('cpi_submissions')
+                  .insert([{
+                      full_name: document.getElementById('full_name').value,
+                      email: document.getElementById('email').value,
+                      phone: document.getElementById('phone').value,
+                      dob: document.getElementById('dob').value,
+                      gov_id_type: document.getElementById('gov_id_type').value,
+                      gov_id_number: document.getElementById('gov_id_number').value,
+                      gov_id_path: uploadData.path,
+                      employment_status: document.getElementById('employment_status').value,
+                      face_descriptor: descriptorInput.value
+                  }]);
+
+              if (dbError) throw dbError;
+
+              alert("Identity Verified Successfully!");
+              window.location.href = "success.html"; // Make sure this page exists
+
+          } catch (err) {
+              console.error(err);
+              alert("Error: " + err.message);
+          }
+      });
+  }
+
+  // AI Capture Button Logic
+  if (scanBtn) {
+      scanBtn.addEventListener('click', async () => {
+          if (!statusText) return;
+          statusText.textContent = "Analyzing... Stay still.";
+          const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+
+          if (detection) {
+              descriptorInput.value = JSON.stringify(Array.from(detection.descriptor));
+              statusText.textContent = "✅ Face Map Captured!";
+              scanBtn.style.backgroundColor = "#2563eb";
+          } else {
+              statusText.textContent = "❌ Face not detected.";
+          }
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', initFormValidation);
 })();
